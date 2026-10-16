@@ -1,11 +1,12 @@
 // Builds `import.json` (a Stylus "import" export) from the Catppuccin reference
-// export `cattpuchin-mocha.json`, re-themed to the Gruvbox / Everforest palettes.
+// export `cattpuchin-mocha.json`, re-themed to the Gruvbox / Everforest /
+// Kanagawa palettes.
 //
 //   node scripts/build-import.mjs
 //
 // Every per-site stylesheet is ported verbatim (selectors, structure, comments)
 // and only re-coloured. The shared Catppuccin library is replaced by an inlined
-// Gruvbox / Everforest library.
+// Gruvbox / Everforest / Kanagawa library.
 //
 // The palette colours live in `scripts/palette-data.mjs`; `src/palettes.json`
 // (for the app UI) is generated separately by `scripts/gen-palettes.mjs`.
@@ -261,7 +262,7 @@ function renderLibrary(body) {
 	}
 
 	const parts = [
-		'/* Gruvbox / Everforest palette library */',
+		'/* Gruvbox / Everforest / Kanagawa palette library */',
 		renderPaletteMap(),
 	];
 	if (usesAccentFilter || usedKeys.size > 0) {
@@ -298,27 +299,19 @@ function selectVar(name, label, options, defaultValue) {
 	};
 }
 
+// One option per palette family, e.g. `gruvbox-light`, `kanagawa-dark`.
+function flavorOptions(mode) {
+	return Object.entries(PALETTE_LABELS).map(([palette, label]) => ({
+		name: `${palette}-${mode}`,
+		label,
+	}));
+}
+
 const VAR_DEFS = {
 	lightFlavor: () =>
-		selectVar(
-			'lightFlavor',
-			'Light Flavor',
-			[
-				{ name: 'gruvbox-light', label: PALETTE_LABELS.gruvbox },
-				{ name: 'everforest-light', label: PALETTE_LABELS.everforest },
-			],
-			'gruvbox-light',
-		),
+		selectVar('lightFlavor', 'Light Flavor', flavorOptions('light'), 'gruvbox-light'),
 	darkFlavor: () =>
-		selectVar(
-			'darkFlavor',
-			'Dark Flavor',
-			[
-				{ name: 'gruvbox-dark', label: PALETTE_LABELS.gruvbox },
-				{ name: 'everforest-dark', label: PALETTE_LABELS.everforest },
-			],
-			'gruvbox-dark',
-		),
+		selectVar('darkFlavor', 'Dark Flavor', flavorOptions('dark'), 'gruvbox-dark'),
 	contrast: () =>
 		selectVar(
 			'contrast',

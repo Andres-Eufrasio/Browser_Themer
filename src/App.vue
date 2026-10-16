@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FlavorName } from './palette';
+import type { FlavorName, PaletteName } from './palette';
 
 import rawUserstylesImport from '../import.json' with { type: 'json' };
 
@@ -81,16 +81,17 @@ const [settings, ...userstyles] = rawUserstylesImport as [
 	UserstyleEntry,
 ];
 
-const THEME_SUFFIX = / (?:Gruvbox|Everforest)(?: \+ (?:Gruvbox|Everforest))?$/;
+const paletteNames = Object.values(paletteLabels).join('|');
+const THEME_SUFFIX = new RegExp(
+	` (?:${paletteNames})(?: \\+ (?:${paletteNames}))?$`,
+);
 
 function siteName(name: string) {
 	return name.replace(THEME_SUFFIX, '');
 }
 
 function paletteLabel(flavor: string) {
-	return flavor.startsWith('everforest')
-		? paletteLabels.everforest
-		: paletteLabels.gruvbox;
+	return paletteLabels[flavor.split('-')[0] as PaletteName] ?? paletteLabels.gruvbox;
 }
 
 function createCustomUserstylesImport() {

@@ -2,13 +2,13 @@
 // `scripts/gen-palettes.mjs` from the single source of truth
 // `scripts/palette-data.mjs`).
 //
-// Two palettes (Gruvbox, Everforest) x two modes (dark, light) x three
-// contrast levels (hard, medium, soft) => 12 flavours. Each flavour exposes the
-// shared set of semantic colour keys plus the accent colours.
+// Each palette (Gruvbox, Everforest, Kanagawa) x two modes (dark, light) x three
+// contrast levels (hard, medium, soft) => one flavour per combination. Each
+// flavour exposes the shared set of semantic colour keys plus the accents.
 
 import rawPalettes from './palettes.json';
 
-export type PaletteName = 'gruvbox' | 'everforest';
+export type PaletteName = 'gruvbox' | 'everforest' | 'kanagawa';
 export type Mode = 'dark' | 'light';
 export type Contrast = 'hard' | 'medium' | 'soft';
 export type FlavorName = `${PaletteName}-${Mode}-${Contrast}`;
@@ -48,10 +48,9 @@ type RawPalettes = Record<
 
 const palettes = rawPalettes as unknown as RawPalettes;
 
-export const paletteLabels: Record<PaletteName, string> = {
-	gruvbox: palettes.gruvbox.label,
-	everforest: palettes.everforest.label,
-};
+export const paletteLabels = Object.fromEntries(
+	Object.entries(palettes).map(([palette, { label }]) => [palette, label]),
+) as Record<PaletteName, string>;
 
 function titleCase(value: string) {
 	return value
@@ -100,15 +99,16 @@ for (const palette of Object.keys(palettes) as PaletteName[]) {
 
 export const flavorEntries = Object.entries(flavors) as [FlavorName, Flavor][];
 
-export const lightFlavorEntries: [string, string][] = [
-	['gruvbox-light', paletteLabels.gruvbox],
-	['everforest-light', paletteLabels.everforest],
-];
+function flavorEntriesFor(mode: Mode): [string, string][] {
+	return (Object.keys(palettes) as PaletteName[]).map((palette) => [
+		`${palette}-${mode}`,
+		paletteLabels[palette],
+	]);
+}
 
-export const darkFlavorEntries: [string, string][] = [
-	['gruvbox-dark', paletteLabels.gruvbox],
-	['everforest-dark', paletteLabels.everforest],
-];
+export const lightFlavorEntries = flavorEntriesFor('light');
+
+export const darkFlavorEntries = flavorEntriesFor('dark');
 
 export const contrastEntries: [Contrast, string][] = CONTRASTS.map(
 	(contrast) => [contrast, titleCase(contrast)],

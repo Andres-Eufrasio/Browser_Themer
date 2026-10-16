@@ -1,4 +1,5 @@
-// Palette definitions for the Gruvbox / Everforest userstyles library.
+// Palette definitions for the Gruvbox / Everforest / Kanagawa userstyles
+// library.
 //
 // This is the single source of truth for both:
 //   - `src/palettes.json` (consumed by the app UI / uno preflight)
@@ -7,7 +8,7 @@
 // Run `node scripts/gen-palettes.mjs` + `node scripts/build-import.mjs` after
 // editing.
 
-/** The seven base accent hues shared by Gruvbox and Everforest. */
+/** The seven base accent hues shared by every palette. */
 export const ACCENT_BASES = [
 	'red',
 	'orange',
@@ -29,7 +30,11 @@ export const ACCENTS = ACCENT_BASES.flatMap((hue) =>
 
 export const CONTRASTS = ['hard', 'medium', 'soft'];
 
-export const PALETTE_LABELS = { gruvbox: 'Gruvbox', everforest: 'Everforest' };
+export const PALETTE_LABELS = {
+	gruvbox: 'Gruvbox',
+	everforest: 'Everforest',
+	kanagawa: 'Kanagawa',
+};
 
 // Non-accent colour keys (Catppuccin-compatible names used by the per-style
 // extra variables, plus the surfaces/text ramp).
@@ -379,6 +384,121 @@ const everforestAlias = (a) => ({
 	purple: a.purple,
 });
 
+// Kanagawa (https://github.com/rebelot/kanagawa.nvim). The dark side is the
+// "wave" theme, the light side is "lotus"; every value below is a named colour
+// from the palette (`lua/kanagawa/colors.lua`). The three contrast levels slide
+// a six-step window along each background ramp:
+//   dark  sumiInk0..sumiInk6 + waveBlue1/waveBlue2
+//   light lotusWhite0..lotusWhite5 + lotusViolet/lotusBlue greys
+const kanagawa = {
+	dark: {
+		accents: {
+			red: '#e46876', // waveRed
+			orange: '#ffa066', // surimiOrange
+			yellow: '#e6c384', // carpYellow
+			green: '#98bb6c', // springGreen
+			aqua: '#7aa89f', // waveAqua2
+			blue: '#7e9cd8', // crystalBlue
+			purple: '#957fb8', // oniViolet
+		},
+		text: '#dcd7ba', // fujiWhite
+		subtext1: '#c8c093', // oldWhite
+		subtext0: '#9cabca', // springViolet2
+		overlay2: '#938aa9', // springViolet1
+		overlay1: '#727169', // fujiGray
+		overlay0: '#54546d', // sumiInk6
+		surface: {
+			hard: {
+				base: '#1a1a22', // sumiInk2
+				mantle: '#181820', // sumiInk1
+				crust: '#16161d', // sumiInk0
+				surface0: '#1f1f28', // sumiInk3
+				surface1: '#223249', // waveBlue1
+				surface2: '#2a2a37', // sumiInk4
+			},
+			medium: {
+				base: '#1f1f28', // sumiInk3
+				mantle: '#1a1a22', // sumiInk2
+				crust: '#181820', // sumiInk1
+				surface0: '#223249', // waveBlue1
+				surface1: '#2a2a37', // sumiInk4
+				surface2: '#2d4f67', // waveBlue2
+			},
+			soft: {
+				base: '#223249', // waveBlue1
+				mantle: '#1f1f28', // sumiInk3
+				crust: '#1a1a22', // sumiInk2
+				surface0: '#2a2a37', // sumiInk4
+				surface1: '#2d4f67', // waveBlue2
+				surface2: '#363646', // sumiInk5
+			},
+		},
+	},
+	light: {
+		accents: {
+			red: '#c84053', // lotusRed
+			orange: '#cc6d00', // lotusOrange
+			yellow: '#de9800', // lotusYellow3
+			green: '#6f894e', // lotusGreen
+			aqua: '#597b75', // lotusAqua
+			blue: '#4d699b', // lotusBlue4
+			purple: '#766b90', // lotusViolet2
+		},
+		text: '#545464', // lotusInk1
+		subtext1: '#716e61', // lotusGray2
+		subtext0: '#8a8980', // lotusGray3
+		overlay2: '#a09cac', // lotusViolet1
+		overlay1: '#9fb5c9', // lotusBlue3
+		overlay0: '#b5cbd2', // lotusBlue2
+		surface: {
+			hard: {
+				base: '#f2ecbc', // lotusWhite3
+				mantle: '#e5ddb0', // lotusWhite2
+				crust: '#e7dba0', // lotusWhite4
+				surface0: '#dcd7ba', // lotusGray
+				surface1: '#e4d794', // lotusWhite5
+				surface2: '#dcd5ac', // lotusWhite1
+			},
+			medium: {
+				base: '#e5ddb0', // lotusWhite2
+				mantle: '#e7dba0', // lotusWhite4
+				crust: '#dcd7ba', // lotusGray
+				surface0: '#e4d794', // lotusWhite5
+				surface1: '#dcd5ac', // lotusWhite1
+				surface2: '#d5cea3', // lotusWhite0
+			},
+			soft: {
+				base: '#e7dba0', // lotusWhite4
+				mantle: '#dcd7ba', // lotusGray
+				crust: '#e4d794', // lotusWhite5
+				surface0: '#dcd5ac', // lotusWhite1
+				surface1: '#d5cea3', // lotusWhite0
+				surface2: '#c9cbd1', // lotusViolet3
+			},
+		},
+	},
+};
+
+const kanagawaAlias = (a) => ({
+	rosewater: a.yellow,
+	flamingo: a.red,
+	pink: a.purple,
+	mauve: a.purple,
+	red: a.red,
+	maroon: a.red,
+	peach: a.orange,
+	yellow: a.yellow,
+	green: a.green,
+	teal: a.aqua,
+	sky: a.blue,
+	sapphire: a.blue,
+	blue: a.blue,
+	lavender: a.purple,
+	orange: a.orange,
+	aqua: a.aqua,
+	purple: a.purple,
+});
+
 // ---------------------------------------------------------------------------
 // Assemble full palettes, keyed by palette -> mode -> contrast.
 // ---------------------------------------------------------------------------
@@ -437,12 +557,34 @@ function buildEverforest(mode) {
 	return out;
 }
 
+function buildKanagawa(mode) {
+	const src = kanagawa[mode];
+	const accents = expandAccents(src.accents);
+	const alias = kanagawaAlias(src.accents);
+	const out = {};
+	for (const contrast of CONTRASTS) {
+		out[contrast] = {
+			...accents,
+			...alias,
+			text: src.text,
+			subtext1: src.subtext1,
+			subtext0: src.subtext0,
+			overlay2: src.overlay2,
+			overlay1: src.overlay1,
+			overlay0: src.overlay0,
+			...src.surface[contrast],
+		};
+	}
+	return out;
+}
+
 export const PALETTES = {
 	gruvbox: { dark: buildGruvbox('dark'), light: buildGruvbox('light') },
 	everforest: { dark: buildEverforest('dark'), light: buildEverforest('light') },
+	kanagawa: { dark: buildKanagawa('dark'), light: buildKanagawa('light') },
 };
 
-/** All flavour keys, e.g. `gruvbox-dark`, `everforest-light`. */
+/** All flavour keys, e.g. `gruvbox-dark`, `everforest-light`, `kanagawa-dark`. */
 export const FLAVORS = [];
 for (const palette of Object.keys(PALETTES)) {
 	for (const mode of ['dark', 'light']) {

@@ -1,12 +1,13 @@
 # Userstyles Customizer
 
-Customize your preferred [Gruvbox](https://github.com/morhetz/gruvbox) or
-[Everforest](https://github.com/sainnhe/everforest) palette, contrast level and
+Customize your preferred [Gruvbox](https://github.com/morhetz/gruvbox),
+[Everforest](https://github.com/sainnhe/everforest) or
+[Kanagawa](https://github.com/rebelot/kanagawa.nvim) palette, contrast level and
 accent color for ported userstyles, and generate a JSON file for installing in
 [Stylus](https://github.com/openstyles/stylus).
 
-Each userstyle lets you pick a light and dark palette (Gruvbox or Everforest), a
-contrast level (hard, medium or soft) and an accent color.
+Each userstyle lets you pick a light and dark palette (Gruvbox, Everforest or
+Kanagawa), a contrast level (hard, medium or soft) and an accent color.
 
 ## Development
 

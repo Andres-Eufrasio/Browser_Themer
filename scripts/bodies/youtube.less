@@ -46,6 +46,74 @@
       --yt-spec-frosted-glass-desktop: @base;
     }
 
+    /* Top bar buttons (mic, create +, etc.) use the theme's tonal colours */
+    ytd-masthead {
+      #voice-search-button,
+      #buttons,
+      #center,
+      #end {
+        .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--tonal,
+        .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--filled,
+        .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--outline,
+        .yt-spec-button-shape-next--icon-button.yt-spec-button-shape-next--tonal,
+        .yt-spec-button-shape-next--icon-button.yt-spec-button-shape-next--filled,
+        yt-button-shape button.yt-spec-button-shape-next--tonal,
+        yt-button-shape button.yt-spec-button-shape-next--filled,
+        button.yt-spec-button-shape-next[aria-label="Search with your voice"],
+        button.yt-spec-button-shape-next[aria-label="Create"] {
+          background-color: @surface0 !important;
+          color: @text !important;
+
+          &:hover {
+            background-color: @surface1 !important;
+          }
+
+          .yt-spec-icon-shape,
+          yt-icon,
+          svg {
+            color: @text !important;
+            fill: @text;
+          }
+
+          .yt-spec-button-shape-next__button-text-content {
+            color: @text !important;
+          }
+        }
+      }
+    }
+
+    /* Top bar buttons - newer YouTube class names (ytSpecButtonShapeNext*) */
+    ytd-masthead {
+      .ytSpecButtonShapeNextHost.ytSpecButtonShapeNextTonal,
+      .ytSpecButtonShapeNextHost.ytSpecButtonShapeNextFilled,
+      .ytSpecButtonShapeNextHost.ytSpecButtonShapeNextOutline,
+      .ytSpecButtonShapeNextHost.ytSpecButtonShapeNextMono {
+        background-color: @surface0 !important;
+        color: @text !important;
+
+        &:hover {
+          background-color: @surface1 !important;
+        }
+
+        .ytSpecButtonShapeNextButtonTextContent,
+        .ytSpecButtonShapeNextIcon,
+        .ytSpecIconShapeHost,
+        yt-icon,
+        svg {
+          color: @text !important;
+          fill: @text;
+        }
+      }
+
+      /* Press/ripple layer that was showing up white */
+      .ytSpecTouchFeedbackShapeStroke {
+        border-color: @surface1 !important;
+      }
+      .ytSpecTouchFeedbackShapeFill {
+        background-color: @surface2 !important;
+      }
+    }
+
     ytd-masthead #container,
     ytd-masthead #background,
     ytd-masthead #frosted-glass {
@@ -53,13 +121,6 @@
       background-color: @base !important;
     }
 
-    /* The top bar's voice-search (mic) and create (+) icon buttons take their
-       colour from a private hashed design token rather than the --yt-spec-icon-*
-       set, so they kept YouTube's own near-white value. */
-    #buttons.ytd-masthead .ytd-masthead[is-icon-button],
-    #voice-search-button.ytd-masthead .ytd-masthead[is-icon-button] {
-      color: @text;
-    }
 
     /* Keep the entire comments area visually consistent with the selected flavor */
     ytd-comments,
@@ -123,10 +184,24 @@
       color: @subtext1 !important;
     }
 
-    /* Sidebar and secondary panels */
+    /* Left sidebar uses the same base colour as the main page */
     ytd-guide-renderer,
     ytd-mini-guide-renderer,
+    ytd-guide-inner-content-renderer,
+    ytd-guide-section-renderer,
+    ytd-guide-collapsible-section-entry-renderer,
+    #guide,
+    #guide-inner-content,
     #guide-content,
+    #guide-wrapper,
+    #guide-renderer,
+    tp-yt-app-drawer #contentContainer,
+    #contentContainer.tp-yt-app-drawer {
+      background-color: @base !important;
+      color: @text;
+    }
+
+    /* Other secondary panels and popups */
     ytd-playlist-panel-renderer,
     ytd-menu-popup-renderer,
     ytd-contextual-menu-renderer {
@@ -542,6 +617,14 @@
     #frosted-glass {
       --yt-frosted-glass-desktop: @base;
       --yt-spec-frosted-glass-desktop: @base;
+    }
+
+    /* The masthead's voice-search (mic) and create (+) icon buttons take their
+       colour from a private hashed design token instead of the --yt-spec-icon-*
+       set, so they would keep YouTube's own near-white value. */
+    #buttons.ytd-masthead .ytd-masthead[is-icon-button],
+    #voice-search-button.ytd-masthead .ytd-masthead[is-icon-button] {
+      color: @text;
     }
 
     ytd-feed-filter-chip-bar-renderer[expand-instead-of-scroll]
