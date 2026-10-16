@@ -1,0 +1,162 @@
+// Replacement body for `styles/claude` (reference form: still uses the
+// `#catppuccin(..)` mixin + Catppuccin colour names, so the shared transform and
+// the inlined Gruvbox / Everforest palette library both apply).
+//
+// Claude's current UI is driven by the `--cds-*` design-system variables, so the
+// whole theme is expressed by overriding those ramps instead of the obsolete
+// `--bg-000` / `--accent-100` / class-based rules the old port targeted.
+
+@-moz-document url-prefix("https://claude.ai/") {
+  // Emit `--cds-<name>-<shade>: <colour>` for every shade in a space-separated list.
+  .cds-ramp(@name, @color, @steps) {
+    each(@steps, { --cds-@{name}-@{value}: @color; });
+  }
+
+  // Every shade of a ramp (0, 10, 20, ... 890, 900).
+  .cds-ramp-all(@name, @color) {
+    .cds-ramp(
+      @name,
+      @color,
+      0 10 20 30 40 50 60 70 80 90 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 810 820 830 840 850 860 870 880 890 900
+    );
+  }
+
+  :where(:root, :host) {
+    &:where([data-mode="dark"]) {
+      #catppuccin(@darkFlavor);
+    }
+    &:where([data-mode="light"]) {
+      #catppuccin(@lightFlavor);
+    }
+  }
+
+  // Fallback for when Claude exposes no explicit mode.
+  @media (prefers-color-scheme: light) {
+    :where(:root, :host):not([data-mode]) {
+      #catppuccin(@lightFlavor);
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :where(:root, :host):not([data-mode]) {
+      #catppuccin(@darkFlavor);
+    }
+  }
+
+  #catppuccin(@flavor) {
+    #lib.palette();
+    #lib.defaults();
+
+    --cds-theme-api: 1;
+
+    /* Grays / Surfaces & Text (Base, Mantle, Crust, Surface, Text) */
+    .cds-ramp(gray, @text, 0 50 200);
+    .cds-ramp(gray, @subtext1, 10 400);
+    .cds-ramp(gray, @subtext0, 20);
+    .cds-ramp(gray, @overlay2, 30);
+    .cds-ramp(gray, @overlay1, 40);
+    .cds-ramp(gray, @surface2, 60);
+    .cds-ramp(gray, @surface1, 70);
+    .cds-ramp(gray, @surface0, 80);
+    .cds-ramp(gray, @base, 90 850);
+    .cds-ramp(gray, @mantle, 100 150 250 300 350 450 500 550 600 650 700 750 800 810 820 830);
+    .cds-ramp(gray, @crust, 840 860 870 880 890 900);
+
+    /* Red (Red / Maroon / Flamingo) */
+    .cds-ramp(red, @rosewater, 0);
+    .cds-ramp(red, @flamingo, 10 20 30 40 50);
+    .cds-ramp(red, @maroon, 60 70 80 90 100);
+    .cds-ramp(red, @red, 150 200 250 300 350 400 450 500 550 600 650 700 750 810 820 830 840 850 860 870 880 890);
+    .cds-ramp(red, @crust, 900);
+    --cds-red-800: fade(darken(@red, 30%), 35%);
+
+    /* Orange (Peach) */
+    .cds-ramp-all(orange, @peach);
+
+    /* Yellow (Yellow) */
+    .cds-ramp-all(yellow, @yellow);
+    --cds-yellow-300: darken(@yellow, 30%);
+
+    /* Green (Green) */
+    .cds-ramp-all(green, @green);
+
+    /* Aqua (Teal / Sky / Sapphire) */
+    .cds-ramp(aqua, @teal, 0 10 20 30 40 50);
+    .cds-ramp(aqua, @sky, 60 70 80 90 100);
+    .cds-ramp(aqua, @sapphire, 150 200 250 300 350 400 450 500 550 600 650 700 750 800 810 820 830 840 850 860 870 880 890 900);
+
+    /* Blue (Blue) */
+    .cds-ramp-all(blue, @blue);
+    --cds-blue-300: lighten(@blue, 32%);
+
+    /* Violet (Lavender / Mauve) */
+    .cds-ramp(violet, @lavender, 0 10 20 30 40 50);
+    .cds-ramp(violet, @mauve, 60 70 80 90 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 810 820 830 840 850 860 870 880 890 900);
+
+    /* Magenta (Pink) */
+    .cds-ramp-all(magenta, @pink);
+
+    /* Roles */
+    --cds-role-accent-50: var(--cds-blue-50);
+    --cds-role-accent-100: var(--cds-blue-100);
+    --cds-role-accent-250: var(--cds-blue-250);
+    --cds-role-accent-300: var(--cds-blue-300);
+    --cds-role-accent-400: var(--cds-blue-400);
+    --cds-role-accent-450: var(--cds-blue-450);
+    --cds-role-accent-600: var(--cds-blue-600);
+    --cds-role-accent-700: var(--cds-blue-700);
+    --cds-role-accent-800: var(--cds-blue-800);
+    --cds-role-accent-850: var(--cds-blue-850);
+    --cds-role-accent-fill: var(--cds-role-accent-450);
+    --cds-role-accent-fill-hover: var(--cds-role-accent-400);
+    --cds-role-accent-on: var(--cds-gray-90);
+
+    --cds-role-danger-100: var(--cds-red-100);
+    --cds-role-danger-250: var(--cds-red-250);
+    --cds-role-danger-300: var(--cds-red-300);
+    --cds-role-danger-400: var(--cds-red-400);
+    --cds-role-danger-450: var(--cds-red-450);
+    --cds-role-danger-600: var(--cds-red-600);
+    --cds-role-danger-700: var(--cds-red-700);
+    --cds-role-danger-800: var(--cds-red-800);
+    --cds-role-danger-fill: var(--cds-role-danger-450);
+    --cds-role-danger-fill-hover: var(--cds-role-danger-400);
+    --cds-role-danger-on: var(--cds-gray-90);
+
+    --cds-role-success-100: var(--cds-green-100);
+    --cds-role-success-250: var(--cds-green-250);
+    --cds-role-success-400: var(--cds-green-400);
+    --cds-role-success-450: var(--cds-green-450);
+    --cds-role-success-600: var(--cds-green-600);
+    --cds-role-success-700: var(--cds-green-700);
+    --cds-role-success-800: var(--cds-green-800);
+    --cds-role-success-fill: var(--cds-role-success-450);
+    --cds-role-success-fill-hover: var(--cds-role-success-400);
+    --cds-role-success-on: var(--cds-gray-90);
+
+    --cds-role-warning-100: var(--cds-yellow-100);
+    --cds-role-warning-200: var(--cds-yellow-200);
+    --cds-role-warning-250: var(--cds-yellow-250);
+    --cds-role-warning-300: var(--cds-yellow-300);
+    --cds-role-warning-600: var(--cds-yellow-600);
+    --cds-role-warning-700: var(--cds-yellow-700);
+    --cds-role-warning-800: var(--cds-yellow-800);
+    --cds-role-warning-fill: var(--cds-role-warning-200);
+    --cds-role-warning-fill-hover: var(--cds-role-warning-250);
+    --cds-role-warning-on: var(--cds-gray-90);
+
+    --cds-role-pro-100: var(--cds-violet-100);
+    --cds-role-pro-250: var(--cds-violet-250);
+    --cds-role-pro-300: var(--cds-violet-300);
+    --cds-role-pro-400: var(--cds-violet-400);
+    --cds-role-pro-450: var(--cds-violet-450);
+    --cds-role-pro-600: var(--cds-violet-600);
+    --cds-role-pro-700: var(--cds-violet-700);
+    --cds-role-pro-800: var(--cds-violet-800);
+    --cds-role-pro-fill: var(--cds-role-pro-450);
+    --cds-role-pro-fill-hover: var(--cds-role-pro-400);
+    --cds-role-pro-on: var(--cds-gray-90);
+
+    --cds-role-tooltip-bg: var(--cds-gray-100);
+    --cds-role-tooltip-fg: var(--cds-gray-0);
+  }
+}

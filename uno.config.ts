@@ -10,11 +10,15 @@ import { flavorEntries, flavors } from './src/palette';
 const GV_PREFIX = false;
 const GV_SELECTOR = (flavor: string) => `[theme="${flavor}"]`;
 
+// All flavours share the same colour keys, so one flavour is enough to declare
+// the utilities; the preflight then defines the values per selected flavour.
+const colorEntries = flavors['gruvbox-dark-medium'].colorEntries;
+
 export default defineConfig({
 	theme: {
 		colors: {
 			...Object.fromEntries(
-				flavors.dark.colorEntries.map(([name]) => [
+				colorEntries.map(([name]) => [
 					`${GV_PREFIX ? `${GV_PREFIX}-` : ''}${name}`,
 					`var(--gv-${name})`,
 				]),

@@ -6,6 +6,6 @@ import 'uno.css';
 
 import { useStorageVersioning } from './utils';
 
-useStorageVersioning('3/12/24');
+useStorageVersioning('16/10/26');
 
 createApp(App).mount('#app');

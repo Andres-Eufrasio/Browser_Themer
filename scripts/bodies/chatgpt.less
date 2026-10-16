@@ -1,0 +1,436 @@
+// Replacement body for `styles/chatgpt` (reference form: still uses the
+// `#catppuccin(..)` mixin + Catppuccin colour names, so the shared transform and
+// the inlined Gruvbox / Everforest palette library both apply).
+//
+// Rebuilt against ChatGPT's current `--main-surface-*` / `--bg-token-*`
+// variables and `html.chatgpt-theme` markup. The `auth.openai.com` block is kept
+// from the upstream port.
+
+@-moz-document domain("chatgpt.com") {
+  html.chatgpt-theme,
+  html.dark,
+  html[data-theme="dark"] {
+    #catppuccin(@darkFlavor);
+  }
+
+  html.light,
+  html[data-theme="light"] {
+    #catppuccin(@lightFlavor);
+  }
+
+  #catppuccin(@flavor) {
+    #lib.palette();
+    #lib.defaults();
+
+    /* ========================================
+       CHATGPT THEME VARIABLES
+       ======================================== */
+
+    --bg-primary: @base;
+    --bg-secondary: @mantle;
+
+    --bg-elevated-primary: @mantle;
+    --bg-elevated-secondary: @crust;
+
+    --main-surface-background: @base;
+    --message-surface: @mantle;
+
+    --text-primary: @text;
+    --text-secondary: @subtext0;
+    --text-tertiary: @subtext1;
+    --text-inverted: @crust;
+
+    --main-surface-primary: @base;
+    --main-surface-primary-inverse: @subtext0;
+    --main-surface-secondary: @surface0;
+    --main-surface-tertiary: @surface1;
+
+    --border-light: @overlay0;
+    --border-medium: @surface2;
+    --border-heavy: @surface1;
+
+    --sidebar-surface-primary: @crust;
+    --sidebar-surface-secondary: @mantle;
+    --sidebar-surface-tertiary: @base;
+
+    --theme-secondary-btn-bg: @base;
+    --theme-secondary-btn-text: @text;
+
+    /* ========================================
+       GLOBAL PAGE BACKGROUND
+       ======================================== */
+
+    &,
+    & body,
+    & #root {
+      background-color: @base !important;
+      color: @text;
+    }
+
+    /* Main ChatGPT layout */
+    & #root > div {
+      background-color: @base !important;
+    }
+
+    /* IMPORTANT:
+       This is the working fix for the current
+       ChatGPT main conversation background. */
+    main[data-app-shell-main-surface="browser"],
+    main.MainContentSurface-EnuIYE {
+      background: @base !important;
+      background-color: @base !important;
+    }
+
+    /* Main content surface */
+    main {
+      --main-surface-background: @base;
+      --main-surface-primary: @base;
+      background-color: @base;
+    }
+
+    /* Keep conversation rows transparent */
+    [data-testid^="conversation-turn"] {
+      background-color: transparent;
+    }
+
+    /* ========================================
+       SIDEBAR
+       ======================================== */
+
+    aside.app-shell-left-panel,
+    #app-shell-sidebar {
+      background-color: @crust !important;
+      --sidebar-surface-primary: @crust;
+      --sidebar-surface-secondary: @mantle;
+      --sidebar-surface-tertiary: @base;
+    }
+
+    /* Sidebar navigation rail */
+    nav[data-app-navigation-rail] {
+      background-color: @mantle !important;
+    }
+
+    /* Sidebar surface utilities */
+    .bg-token-sidebar-surface-primary {
+      background-color: @crust !important;
+    }
+
+    .bg-token-sidebar-surface-secondary {
+      background-color: @mantle !important;
+    }
+
+    /* ========================================
+       CHAT COMPOSER / MESSAGE INPUT
+       ======================================== */
+
+    /* Composer-related theme variables */
+    main [class*="composer"],
+    main [data-testid*="composer"] {
+      --main-surface-primary: @base;
+      --main-surface-secondary: @surface0;
+      --message-surface: @mantle;
+    }
+
+    /* Input surface */
+    textarea,
+    [contenteditable="true"] {
+      color: @text;
+      caret-color: @blue;
+    }
+
+    textarea::placeholder {
+      color: @overlay1;
+    }
+
+    /* Common composer background utilities */
+    .dark\:bg-\[\#303030\] {
+      background-color: @surface0 !important;
+    }
+
+    /* Composer borders */
+    [data-testid*="composer"] {
+      border-color: @surface1;
+    }
+
+    /* ========================================
+       SURFACE COLORS
+       ======================================== */
+
+    .bg-token-bg-primary,
+    .bg-token-main-surface,
+    .bg-token-main-surface-primary {
+      background-color: @base !important;
+    }
+
+    .bg-token-main-surface-secondary {
+      background-color: @surface0 !important;
+    }
+
+    .bg-token-main-surface-tertiary {
+      background-color: @surface1 !important;
+    }
+
+    /* Menus, popovers, and dialogs */
+    [role="dialog"],
+    [data-radix-popper-content-wrapper] {
+      --main-surface-primary: @base;
+      --main-surface-secondary: @surface0;
+    }
+
+    /* ========================================
+       BUTTONS AND CONTROLS
+       ======================================== */
+
+    .dark\:bg-white {
+      background-color: @text !important;
+    }
+
+    .dark\:text-black {
+      color: @crust !important;
+    }
+
+    /* Search, Reason, Deep Research and similar buttons */
+    .dark\:bg-\[\#2A4A6D\] {
+      background-color: @blue !important;
+      color: @crust !important;
+
+      &:hover {
+        background-color: @lavender !important;
+      }
+    }
+
+    .border-green-600 {
+      border-color: @green !important;
+    }
+
+    .btn-green {
+      background-color: darken(@green, 20%);
+      color: @text;
+
+      &:hover {
+        background-color: @green;
+        color: @crust;
+      }
+    }
+
+    /* Keyboard focus */
+    :is(button, textarea, input, [contenteditable="true"]):focus-visible {
+      outline-color: @mauve;
+    }
+
+    /* ========================================
+       INLINE CODE
+       ======================================== */
+
+    code:not([class*="language-"]):not(pre code) {
+      padding: 0.15rem 0.3rem;
+      border-radius: 4.5px;
+      background-color: @surface1;
+      color: @pink;
+    }
+
+    /* ========================================
+       CODE BLOCKS
+       ======================================== */
+
+    pre,
+    pre code,
+    code.hljs {
+      background-color: @mantle;
+    }
+
+    pre code {
+      color: @text;
+    }
+
+    /* Code block borders */
+    .border-token-border-medium {
+      border-color: @surface0;
+    }
+
+    /* ========================================
+       SYNTAX HIGHLIGHTING
+       ======================================== */
+
+    .hljs,
+    code[class*="language-"] {
+      color: @text;
+    }
+
+    .hljs-comment,
+    .hljs-quote {
+      color: @overlay1;
+      font-style: italic;
+    }
+
+    .hljs-keyword,
+    .hljs-selector-tag,
+    .hljs-literal,
+    .hljs-meta .hljs-keyword {
+      color: @mauve;
+    }
+
+    .hljs-title,
+    .hljs-title.function_,
+    .hljs-section,
+    .hljs-function {
+      color: @blue;
+    }
+
+    .hljs-string,
+    .hljs-regexp,
+    .hljs-addition {
+      color: @green;
+    }
+
+    .hljs-number,
+    .hljs-symbol,
+    .hljs-bullet {
+      color: @peach;
+    }
+
+    .hljs-name,
+    .hljs-tag {
+      color: @red;
+    }
+
+    .hljs-attribute,
+    .hljs-attr {
+      color: @yellow;
+    }
+
+    .hljs-built_in,
+    .hljs-type,
+    .hljs-class .hljs-title {
+      color: @teal;
+    }
+
+    .hljs-variable,
+    .hljs-template-variable,
+    .hljs-params {
+      color: @flamingo;
+    }
+
+    .hljs-property,
+    .hljs-selector-class,
+    .hljs-selector-id {
+      color: @sky;
+    }
+
+    .hljs-meta,
+    .hljs-doctag {
+      color: @subtext0;
+    }
+
+    .hljs-deletion {
+      color: @red;
+    }
+
+    /* ========================================
+       SCROLLBARS
+       ======================================== */
+
+    * {
+      scrollbar-color: @surface1 @base;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background-color: @surface1;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+      background-color: @overlay0;
+    }
+
+    /* === FIX BOTTOM BLACK STRIP === */
+
+    div.background-uNUrfY.surface-nr8PSS {
+      background: @base !important;
+      background-color: @base !important;
+      background-image: none !important;
+    }
+
+    /* Also override the surface utility */
+    .background-uNUrfY.bg-surface {
+      background-color: @base !important;
+    }
+
+    /* Full-screen transition overlay */
+    div.absolute.inset-0.bg-surface.pointer-events-none {
+      background-color: @base !important;
+    }
+
+    /* === FIX BLACK OVERLAY IN OPEN SIDEBAR === */
+
+    /* Active full-size sidebar surface */
+    #app-shell-sidebar div.absolute.inset-0.flex.bg-surface,
+    aside.app-shell-left-panel div.absolute.inset-0.flex.bg-surface {
+      background: @crust !important;
+      background-color: @crust !important;
+      background-image: none !important;
+    }
+
+    /* Ensure the expanded sidebar itself stays on the palette */
+    aside.app-shell-left-panel,
+    #app-shell-sidebar {
+      background-color: @crust !important;
+    }
+  }
+}
+
+@-moz-document domain("auth.openai.com") {
+  :root {
+    @media (prefers-color-scheme: light) {
+      #catppuccin(@lightFlavor);
+    }
+    @media (prefers-color-scheme: dark) {
+      #catppuccin(@darkFlavor);
+    }
+  }
+
+  #catppuccin(@flavor) {
+    #lib.palette();
+    #lib.defaults();
+
+    color: @text;
+
+    background-color: @base;
+    --main-page-background: @base;
+
+    // Logo
+    a[href="https://chatgpt.com"] > svg {
+      filter: @text-filter;
+    }
+
+    --text-primary: @text;
+    --text-secondary: @subtext1;
+    --text-tertiary: @subtext0;
+    --text-placeholder: @subtext0; // form field labels above the input (e.g. "Email" and "Password")
+
+    --accent-blue: @accent;
+    --link: @accent;
+
+    --border-medium: @surface2;
+
+    --button-primary-background: @text;
+    --button-primary-hover: @subtext1;
+    --button-text-on-primary: @base;
+
+    --button-outline-hover: @surface0;
+
+    --gray-100: @surface2; // divider lines
+
+    input {
+      color: @text;
+    }
+
+    [class*="_toggleVisibilityButton"]:where(:hover, :focus-visible)::before {
+      background-color: @surface0;
+    }
+
+    [data-overlay-container] [class*="_tooltip"] {
+      --tooltip-background-color: @mantle !important;
+      --tooltip-color: @text !important;
+    }
+  }
+}

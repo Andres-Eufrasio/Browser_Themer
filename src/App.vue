@@ -4,53 +4,127 @@ import type { FlavorName } from './palette';
 import rawUserstylesImport from '../import.json' with { type: 'json' };
 
 import { get, set } from '@vueuse/core';
-import { flavorEntries, flavors } from './palette';
-
-const accentEntries = flavors.dark.colorEntries.filter(
-	([_, { accent }]) => accent,
-);
+import {
+	accentEntries,
+	contrastEntries,
+	darkFlavorEntries,
+	flavors,
+	lightFlavorEntries,
+	paletteLabels,
+} from './palette';
 
 const isDark = usePreferredDark();
 
-const mode = useColorMode<FlavorName>({
-	attribute: 'theme',
-	modes: Object.fromEntries(
-		Object.keys(flavors).map((flavor) => [flavor, flavor]),
-	),
-	initialValue: isDark ? 'dark' : 'light',
-});
-const { state, next } = useCycleList<FlavorName>(
-	Object.keys(flavors) as FlavorName[],
-	{
-		initialValue: mode as Ref<FlavorName>,
-	},
+const themeMode = useStorage<'dark' | 'light'>(
+	'themeMode',
+	isDark.value ? 'dark' : 'light',
 );
-watchEffect(() => set(mode, get(state)));
-
-const darkFlavor = useStorage<FlavorName>('darkFlavor', 'dark');
-const lightFlavor = useStorage<FlavorName>('lightFlavor', 'light');
+const darkFlavor = useStorage<string>('darkFlavor', 'gruvbox-dark');
+const lightFlavor = useStorage<string>('lightFlavor', 'gruvbox-light');
+const contrast = useStorage<string>('contrast', 'medium');
 const accentColor = useStorage<string>('accentColor', 'orange');
+
+const activeFlavor = computed(() =>
+	themeMode.value === 'dark' ? darkFlavor.value : lightFlavor.value,
+);
+const previewFlavor = computed<FlavorName>(() => {
+	const key = `${activeFlavor.value}-${contrast.value}` as FlavorName;
+	return flavors[key] ? key : 'gruvbox-dark-medium';
+});
+const themeLabel = computed(() => {
+	const flavor = flavors[previewFlavor.value];
+	return `${paletteLabels[flavor.palette]} ${flavor.dark ? 'Dark' : 'Light'}`;
+});
+
+// --- Download button contrast -------------------------------------------
+// The button is filled with the selected accent; pick whichever of the
+// flavour's background/foreground reads better on top of it.
+function relativeLuminance(hex: string) {
+	const channels = [1, 3, 5]
+		.map((i) => Number.parseInt(hex.slice(i, i + 2), 16) / 255)
+		.map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+	return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function contrastRatio(a: string, b: string) {
+	const [light, dark] = [relativeLuminance(a), relativeLuminance(b)].sort(
+		(x, y) => y - x,
+	);
+	return (light + 0.05) / (dark + 0.05);
+}
+
+const downloadStyle = computed(() => {
+	const flavor = flavors[previewFlavor.value];
+	const accentHex =
+		flavor.colors[get(accentColor)]?.hex ?? flavor.colors.text.hex;
+	const on = (['base', 'text'] as const).sort(
+		(a, b) =>
+			contrastRatio(accentHex, flavor.colors[b].hex) -
+			contrastRatio(accentHex, flavor.colors[a].hex),
+	)[0];
+	return {
+		backgroundColor: `var(--gv-${get(accentColor)})`,
+		color: `var(--gv-${on})`,
+	};
+});
+
+function toggleMode() {
+	set(themeMode, themeMode.value === 'dark' ? 'light' : 'dark');
+}
+
+watchEffect(() => {
+	document.documentElement.setAttribute('theme', previewFlavor.value);
+});
 
 const [settings, ...userstyles] = rawUserstylesImport as [
 	SettingsEntry,
 	UserstyleEntry,
 ];
 
+const THEME_SUFFIX = / (?:Gruvbox|Everforest)(?: \+ (?:Gruvbox|Everforest))?$/;
+
+function siteName(name: string) {
+	return name.replace(THEME_SUFFIX, '');
+}
+
+function paletteLabel(flavor: string) {
+	return flavor.startsWith('everforest')
+		? paletteLabels.everforest
+		: paletteLabels.gruvbox;
+}
+
 function createCustomUserstylesImport() {
+	const light = paletteLabel(get(lightFlavor));
+	const dark = paletteLabel(get(darkFlavor));
+	const suffix = light === dark ? light : `${light} + ${dark}`;
+
 	const customSelectedUserstyles = userstyles
 		.filter(({ name }) => get(selectedUserstyles)[name])
 		.map((userstyle) => {
-			if (userstyle.usercssData.vars.accentColor) {
-				userstyle.usercssData.vars.accentColor.value = get(accentColor);
+			const vars = { ...userstyle.usercssData.vars };
+			if (vars.accentColor) {
+				vars.accentColor = { ...vars.accentColor, value: get(accentColor) };
 			}
-			if (userstyle.usercssData.vars.darkFlavor) {
-				userstyle.usercssData.vars.darkFlavor.value = get(darkFlavor);
+			if (vars.darkFlavor) {
+				vars.darkFlavor = { ...vars.darkFlavor, value: get(darkFlavor) };
 			}
-			if (userstyle.usercssData.vars.lightFlavor) {
-				userstyle.usercssData.vars.lightFlavor.value = get(lightFlavor);
+			if (vars.lightFlavor) {
+				vars.lightFlavor = { ...vars.lightFlavor, value: get(lightFlavor) };
+			}
+			if (vars.contrast) {
+				vars.contrast = { ...vars.contrast, value: get(contrast) };
 			}
 
-			return userstyle;
+			const name = `${siteName(userstyle.name)} ${suffix}`;
+			return {
+				...userstyle,
+				name,
+				usercssData: { ...userstyle.usercssData, name, vars },
+				sourceCode: userstyle.sourceCode.replace(
+					/^@name .*$/m,
+					`@name ${name}`,
+				),
+			};
 		});
 
 	return JSON.stringify([settings, ...customSelectedUserstyles]);
@@ -92,7 +166,7 @@ function download() {
 <template>
 	<div class="h-100vh w-full flex flex-col px4 pt4 text-lg gap-24">
 		<header class="flex justify-between">
-			<h1 class="text-3xl">Gruvbox Userstyles Customizer</h1>
+			<h1 class="text-3xl">Userstyles Customizer</h1>
 			<div class="flex flex-row gap-2 h-[min-content]">
 				<a
 					class="border border-surface0 border-rounded flex h-auto p2 hover:bg-mantle"
@@ -104,10 +178,10 @@ function download() {
 				</a>
 				<button
 					class="border border-surface0 border-rounded flex p2 hover:bg-mantle"
-					:aria-label="`Toggle theme to ${flavors[state].name}`"
-					@click="next()"
+					:aria-label="`Toggle to ${themeMode === 'dark' ? 'light' : 'dark'} mode`"
+					@click="toggleMode()"
 				>
-					<span class="capitalize">{{ flavors[state].name }}</span>
+					<span>{{ themeLabel }}</span>
 				</button>
 			</div>
 		</header>
@@ -124,10 +198,11 @@ function download() {
 						name="lightFlavor"
 					>
 						<option
-							v-for="[flavor, { name }] in flavorEntries"
+							v-for="[flavor, label] in lightFlavorEntries"
+							:key="flavor"
 							:value="flavor"
 						>
-							{{ name }}
+							{{ label }}
 						</option>
 					</select>
 				</div>
@@ -140,10 +215,28 @@ function download() {
 						name="darkFlavor"
 					>
 						<option
-							v-for="[flavor, { name }] in flavorEntries"
+							v-for="[flavor, label] in darkFlavorEntries"
+							:key="flavor"
 							:value="flavor"
 						>
-							{{ name }}
+							{{ label }}
+						</option>
+					</select>
+				</div>
+				<div class="flex flex-col gap-2">
+					<label for="contrast">Contrast</label>
+					<select
+						id="contrast"
+						v-model="contrast"
+						class="border border-surface0 border-rounded bg-base p2"
+						name="contrast"
+					>
+						<option
+							v-for="[value, label] in contrastEntries"
+							:key="value"
+							:value="value"
+						>
+							{{ label }}
 						</option>
 					</select>
 				</div>
@@ -157,6 +250,7 @@ function download() {
 					>
 						<option
 							v-for="[color, { name }] in accentEntries"
+							:key="color"
 							:value="color"
 						>
 							{{ name }}
@@ -165,10 +259,8 @@ function download() {
 				</div>
 			</div>
 			<button
-				class="border-rounded mx-auto flex flex-row gap-2 bg-orange text-base py-2 px-4 justify-center items-center hover:scale-105 transition-transform group"
-				:style="{
-					backgroundColor: `var(--gv-${get(accentColor)})`,
-				}"
+				class="border-rounded mx-auto flex flex-row gap-2 py-2 px-4 justify-center items-center hover:scale-105 transition-transform group"
+				:style="downloadStyle"
 				title="Download"
 				@click="download()"
 			>
@@ -212,7 +304,7 @@ function download() {
 							class="flex flex-row gap-2 border border-surface0 border-rounded p2 items-center justify-between"
 						>
 							<h2 class="text-xl">
-								{{ userstyle.name.replace(' Gruvbox', ' ') }}
+								{{ siteName(userstyle.name) }}
 							</h2>
 							<input
 								type="checkbox"
