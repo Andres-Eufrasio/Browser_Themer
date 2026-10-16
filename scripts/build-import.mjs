@@ -1,12 +1,12 @@
 // Builds `import.json` (a Stylus "import" export) from the Catppuccin reference
 // export `cattpuchin-mocha.json`, re-themed to the Gruvbox / Everforest /
-// Kanagawa palettes.
+// Kanagawa / Catppuccin palettes.
 //
 //   node scripts/build-import.mjs
 //
 // Every per-site stylesheet is ported verbatim (selectors, structure, comments)
 // and only re-coloured. The shared Catppuccin library is replaced by an inlined
-// Gruvbox / Everforest / Kanagawa library.
+// Gruvbox / Everforest / Kanagawa / Catppuccin library.
 //
 // The palette colours live in `scripts/palette-data.mjs`; `src/palettes.json`
 // (for the app UI) is generated separately by `scripts/gen-palettes.mjs`.
@@ -16,7 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-	ACCENTS,
+	ACCENT_CHOICES,
 	CONTRASTS,
 	FLAVORS,
 	KEYS,
@@ -24,15 +24,19 @@ import {
 	PALETTE_LABELS,
 } from './palette-data.mjs';
 import { saveCache, solveFilter } from './filter-solver.mjs';
+import {
+	AUTHOR,
+	BASE_PALETTE,
+	HOMEPAGE,
+	VERSION,
+	descriptionFor,
+} from './meta.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const REF = JSON.parse(fs.readFileSync(path.join(root, 'cattpuchin-mocha.json'), 'utf8'));
 const [refSettings, ...refStyles] = REF;
 
-const AUTHOR = 'gruvbox-userstyles';
-const HOMEPAGE = 'https://github.com/morhetz/gruvbox';
-const VERSION = '1.0.0';
 const STANDARD_VARS = ['lightFlavor', 'darkFlavor', 'accentColor'];
 
 // Imports to drop: the shared Catppuccin library, the Catppuccin-hosted syntax
@@ -150,14 +154,46 @@ function flavor(id, contrast, key) {
 	return PALETTES[id.palette][id.mode][contrast][key];
 }
 
-function renderPaletteMap() {
-	const lines = ['@gruvbox: {'];
+/**
+ * Emits one definition per distinct set of values and a `@<name>` map that
+ * points the flavour/contrast combinations at them.
+ *
+ * Combinations that resolve to the same colours share a set: Catppuccin has no
+ * contrast variants, and each of its flavours is offered in both dropdowns, so
+ * its 24 combinations collapse into 4 sets. Less maps can point at other maps,
+ * so `@gruvbox[@flavour][@contrast][@key]` and friends keep working.
+ */
+function renderSetMap(name, prefix, keys, valueOf) {
+	const sets = [];
+	const refs = new Map();
+	const seen = new Map();
+	for (const f of FLAVORS) {
+		for (const c of CONTRASTS) {
+			const values = keys.map((key) => valueOf(f, c, key));
+			const signature = values.join('\u0000');
+			let setName = seen.get(signature);
+			if (!setName) {
+				setName = `${prefix}${sets.length}`;
+				seen.set(signature, setName);
+				sets.push({ setName, values });
+			}
+			refs.set(`${f.key} ${c}`, setName);
+		}
+	}
+
+	const lines = [];
+	for (const { setName, values } of sets) {
+		lines.push(`@${setName}: {`);
+		keys.forEach((key, index) =>
+			lines.push(`  @${key}: ${values[index]};`),
+		);
+		lines.push('};');
+	}
+	lines.push('', `@${name}: {`);
 	for (const f of FLAVORS) {
 		lines.push(`  @${f.key}: {`);
 		for (const c of CONTRASTS) {
-			lines.push(`    @${c}: {`);
-			for (const k of KEYS) lines.push(`      @${k}: ${flavor(f, c, k)};`);
-			lines.push('    };');
+			lines.push(`    @${c}: @${refs.get(`${f.key} ${c}`)};`);
 		}
 		lines.push('  };');
 	}
@@ -165,27 +201,22 @@ function renderPaletteMap() {
 	return lines.join('\n');
 }
 
+function renderPaletteMap() {
+	return renderSetMap('gruvbox', 'gv-set', KEYS, (f, c, key) =>
+		flavor(f, c, key),
+	);
+}
+
 function renderFiltersMap(usedKeys) {
-	const lines = ['@gruvbox-filters: {'];
-	for (const f of FLAVORS) {
-		lines.push(`  @${f.key}: {`);
-		for (const c of CONTRASTS) {
-			lines.push(`    @${c}: {`);
-			for (const k of KEYS) {
-				if (!usedKeys.has(k)) continue;
-				lines.push(`      @${k}: ${solveFilter(flavor(f, c, k))};`);
-			}
-			lines.push('    };');
-		}
-		lines.push('  };');
-	}
-	lines.push('};');
-	return lines.join('\n');
+	const keys = KEYS.filter((key) => usedKeys.has(key));
+	return renderSetMap('gruvbox-filters', 'gv-fset', keys, (f, c, key) =>
+		solveFilter(flavor(f, c, key)),
+	);
 }
 
 function renderMaps() {
 	const lines = ['@gruvbox-modes: {'];
-	for (const f of FLAVORS) lines.push(`  @${f.key}: ${f.mode};`);
+	for (const f of FLAVORS) lines.push(`  @${f.key}: ${f.scheme};`);
 	lines.push('};', '', '@inverse-flavor: {');
 	for (const f of FLAVORS) {
 		const inv = `${f.palette}-${f.mode === 'dark' ? 'light' : 'dark'}`;
@@ -255,14 +286,14 @@ function renderLibrary(body) {
 	for (const m of body.matchAll(/@([a-z0-9-]+)-filter\b/g)) {
 		if (m[1] === 'accent') {
 			usesAccentFilter = true;
-			for (const a of ACCENTS) usedKeys.add(a);
+			for (const { key } of ACCENT_CHOICES) usedKeys.add(key);
 		} else if (KEYS.includes(m[1])) {
 			usedKeys.add(m[1]);
 		}
 	}
 
 	const parts = [
-		'/* Gruvbox / Everforest / Kanagawa palette library */',
+		'/* Gruvbox / Everforest / Kanagawa / Catppuccin palette library */',
 		renderPaletteMap(),
 	];
 	if (usesAccentFilter || usedKeys.size > 0) {
@@ -279,14 +310,6 @@ function renderLibrary(body) {
 // ---------------------------------------------------------------------------
 // Metadata
 // ---------------------------------------------------------------------------
-
-// `bright-red` -> `Bright Red`
-function accentLabel(key) {
-	return key
-		.split('-')
-		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(' ');
-}
 
 function selectVar(name, label, options, defaultValue) {
 	return {
@@ -327,7 +350,7 @@ const VAR_DEFS = {
 		selectVar(
 			'accentColor',
 			'Accent',
-			ACCENTS.map((a) => ({ name: a, label: accentLabel(a) })),
+			ACCENT_CHOICES.map(({ key, label }) => ({ name: key, label })),
 			'orange',
 		),
 };
@@ -335,8 +358,9 @@ const VAR_DEFS = {
 const STANDARD_VAR_ORDER = ['lightFlavor', 'darkFlavor', 'contrast', 'accentColor'];
 
 function buildEntry(ref) {
-	const baseName = ref.name.replace(/ Catppuccin$/, '');
-	const name = `${baseName} Gruvbox`;
+	const site = ref.name.replace(/ Catppuccin$/, '');
+	const name = `${site} ${BASE_PALETTE}`;
+	const description = descriptionFor(BASE_PALETTE, site);
 	const key = ref.usercssData.namespace.split('/').pop();
 
 	const source = BODY_OVERRIDES[key]
@@ -369,7 +393,7 @@ function buildEntry(ref) {
 		`@namespace gruvbox-userstyles-${key}`,
 		`@homepageURL ${HOMEPAGE}`,
 		`@version ${VERSION}`,
-		`@description ${ref.usercssData.description}`,
+		`@description ${description}`,
 		`@author ${AUTHOR}`,
 		'@license MIT',
 		'',
@@ -390,7 +414,7 @@ function buildEntry(ref) {
 	return {
 		enabled: ref.enabled,
 		name,
-		description: ref.usercssData.description,
+		description,
 		author: AUTHOR,
 		updateUrl: '',
 		usercssData: {
@@ -400,7 +424,7 @@ function buildEntry(ref) {
 			version: VERSION,
 			updateURL: '',
 			supportURL: '',
-			description: ref.usercssData.description,
+			description,
 			author: AUTHOR,
 			license: 'MIT',
 			preprocessor: 'less',

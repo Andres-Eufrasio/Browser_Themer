@@ -14,6 +14,11 @@ export const SIGNATURE_ACCENT = {
 	gruvbox: 'orange',
 	everforest: 'green',
 	kanagawa: 'blue',
+	// Catppuccin's signature accent is mauve, at every flavour.
+	'catppuccin-latte': 'mauve',
+	'catppuccin-frappe': 'mauve',
+	'catppuccin-macchiato': 'mauve',
+	'catppuccin-mocha': 'mauve',
 };
 
 // Placeholder token meaning "use the flavour's selected accent".

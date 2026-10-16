@@ -2,7 +2,7 @@ node_modules/
 dist/
 
 auto-imports.d.ts
-
+.tgz
 .DS_Store
 Thumbs.db
 

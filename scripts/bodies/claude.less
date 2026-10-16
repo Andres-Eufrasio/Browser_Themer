@@ -2,9 +2,15 @@
 // `#catppuccin(..)` mixin + Catppuccin colour names, so the shared transform and
 // the inlined Gruvbox / Everforest palette library both apply).
 //
-// Claude's current UI is driven by the `--cds-*` design-system variables, so the
-// whole theme is expressed by overriding those ramps instead of the obsolete
-// `--bg-000` / `--accent-100` / class-based rules the old port targeted.
+// Claude themes itself two ways at once, so both are covered:
+//
+//   * the `--cds-*` design-system ramps, which drive most of the app;
+//   * the older `bg-bg-*` / `text-text-*` Tailwind tokens and the `bg-white`
+//     utilities, which still back the sidebar, the composer, the menus and the
+//     code blocks, and resolve through `hsl(var(--bg-000))`.
+//
+// The palette is published as `--<colour-name>` custom properties, so the rules
+// at the bottom are written once and the mode blocks above pick the values.
 
 @-moz-document url-prefix("https://claude.ai/") {
   // Emit `--cds-<name>-<shade>: <colour>` for every shade in a space-separated list.
@@ -19,6 +25,17 @@
       @color,
       0 10 20 30 40 50 60 70 80 90 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 810 820 830 840 850 860 870 880 890 900
     );
+  }
+
+  // Emit `--<name>: <h> <s>% <l>%`, the space-separated channel triple Claude's
+  // Tailwind tokens are written in, so `hsl(var(--bg-000) / 50%)` keeps
+  // working. (The library's own `.hslify()` is the legacy comma form, which
+  // breaks that slash syntax.)
+  .hsl-token(@name, @color) {
+    --@{name}: ~"@{hue} @{sat} @{light}" !important;
+    @hue: round(hue(@color));
+    @sat: round(saturation(@color));
+    @light: round(lightness(@color));
   }
 
   :where(:root, :host) {
@@ -158,5 +175,343 @@
 
     --cds-role-tooltip-bg: var(--cds-gray-100);
     --cds-role-tooltip-fg: var(--cds-gray-0);
+
+    /* ---------------------------------------------------------------------
+       The palette, plus Claude's older design tokens.
+
+       Claude's `bg-bg-*` / `text-text-*` utilities and its `bg-white`
+       fallbacks still resolve through `hsl(var(--bg-000))`, so those tokens
+       have to be republished as channel triples for backgrounds, borders and
+       placeholders to follow the theme.
+
+       Everything Claude defines itself carries `!important`: these mode blocks
+       are `:where()`-scoped (zero specificity) on purpose, so the `--cds-*`
+       ramps stay overridable per subtree, and a plain declaration here would
+       lose to Claude's own `:root` values.
+
+       `--bg-*` climbs the surface ramp (bg-000 base, bg-100 mantle, bg-200
+       crust, then the raised surface0/surface1) rather than repeating the
+       background colour, so Claude's raised chips and inputs stay visible.
+       --------------------------------------------------------------------- */
+    --rosewater: @rosewater;
+    --flamingo: @flamingo;
+    --pink: @pink;
+    --mauve: @mauve;
+    --red: @red;
+    --maroon: @maroon;
+    --peach: @peach;
+    --yellow: @yellow;
+    --green: @green;
+    --teal: @teal;
+    --sky: @sky;
+    --sapphire: @sapphire;
+    --blue: @blue;
+    --lavender: @lavender;
+
+    --text: @text;
+    --subtext1: @subtext1;
+    --subtext0: @subtext0;
+
+    --overlay2: @overlay2;
+    --overlay1: @overlay1;
+    --overlay0: @overlay0;
+
+    --surface2: @surface2;
+    --surface1: @surface1;
+    --surface0: @surface0;
+
+    --base: @base;
+    --mantle: @mantle;
+    --crust: @crust;
+
+    /* The accent the user picked, wherever Claude wants a brand colour. */
+    --accent: @accent;
+
+    .hsl-token(bg-000, @base);
+    .hsl-token(bg-100, @mantle);
+    .hsl-token(bg-200, @crust);
+    .hsl-token(bg-300, @surface0);
+    .hsl-token(bg-400, @surface1);
+
+    .hsl-token(text-000, @text);
+    .hsl-token(text-100, @text);
+    .hsl-token(text-200, @subtext1);
+    .hsl-token(text-300, @subtext0);
+    .hsl-token(text-400, @overlay2);
+
+    .hsl-token(border-100, @surface1);
+    .hsl-token(border-200, @surface0);
+
+    .hsl-token(accent-brand, @accent);
+    .hsl-token(accent-main-000, @accent);
+    .hsl-token(accent-main-100, darken(@accent, 6%));
+    .hsl-token(accent-main-200, darken(@accent, 16%));
+
+    /* The same values as whole colours, for the places Claude reads them with
+       `var()` instead of `hsl(var())`. */
+    --color-background-primary: @base !important;
+    --color-background-secondary: @mantle !important;
+    --color-background-tertiary: @crust !important;
+    --color-text-primary: @text !important;
+    --color-text-secondary: @subtext1 !important;
+    --color-border-primary: @surface1 !important;
+
+    --font-claude-response: inherit;
+  }
+
+  /* -----------------------------------------------------------------------
+     Backgrounds, surfaces and controls.
+
+     Written once, against the custom properties the mode blocks define, so
+     there is nothing mode-specific down here.
+     ----------------------------------------------------------------------- */
+
+  html,
+  body,
+  body > div,
+  #root,
+  main {
+    background-color: var(--base) !important;
+    color: var(--text);
+  }
+
+  /* Claude's general surfaces */
+  [class*="bg-bg-000"],
+  [class*="bg-bg-100"],
+  [class*="bg-background"] {
+    color: var(--text);
+  }
+
+  /* Main conversation area: hold the primary background even where a nested
+     provider raises it back to its own value. */
+  main,
+  main [class*="flex-1"] {
+    --color-background-primary: var(--base) !important;
+  }
+
+  /* Sidebar */
+  aside.dframe-sidebar,
+  aside[aria-label="Sidebar"],
+  nav[aria-label="Sidebar"] {
+    background-color: var(--crust) !important;
+    color: var(--text) !important;
+  }
+
+  /* Sidebar surface fallbacks */
+  aside.dframe-sidebar [class*="bg-bg-000"],
+  aside.dframe-sidebar [class*="bg-bg-100"],
+  aside.dframe-sidebar [class*="bg-bg-200"],
+  aside[aria-label="Sidebar"] [class*="bg-bg-000"],
+  aside[aria-label="Sidebar"] [class*="bg-bg-100"] {
+    background-color: var(--crust) !important;
+  }
+
+  /* Sidebar headings and labels */
+  aside.dframe-sidebar [data-sidebar-group-label],
+  aside.dframe-sidebar h1,
+  aside.dframe-sidebar h2,
+  aside.dframe-sidebar h3 {
+    color: var(--subtext0) !important;
+  }
+
+  /* Sidebar hover states */
+  aside.dframe-sidebar button:hover,
+  aside.dframe-sidebar a:hover,
+  aside[aria-label="Sidebar"] button:hover,
+  aside[aria-label="Sidebar"] a:hover {
+    background-color: var(--surface0) !important;
+  }
+
+  /* Sidebar separators */
+  aside.dframe-sidebar hr,
+  aside.dframe-sidebar [class*="border"] {
+    border-color: var(--surface0);
+  }
+
+  /* Chat header */
+  [data-testid="chat-header"] {
+    background-color: var(--base) !important;
+    color: var(--text) !important;
+  }
+
+  /* Composer */
+  [data-testid="chat-input"],
+  [contenteditable="true"],
+  textarea {
+    color: var(--text) !important;
+    caret-color: var(--accent) !important;
+  }
+
+  [data-testid="chat-input"] {
+    background-color: var(--mantle) !important;
+    border-color: var(--surface1) !important;
+    color: var(--text) !important;
+  }
+
+  [data-testid="chat-input"] textarea,
+  [data-testid="chat-input"] [contenteditable="true"],
+  .ProseMirror {
+    background-color: transparent !important;
+    color: var(--text) !important;
+    caret-color: var(--accent) !important;
+  }
+
+  textarea::placeholder,
+  [contenteditable="true"]:empty::before,
+  .ProseMirror p.is-editor-empty:first-child::before {
+    color: var(--overlay1) !important;
+  }
+
+  /* User message bubble */
+  [data-user-message-bubble="true"] {
+    background-color: var(--surface0) !important;
+    color: var(--text) !important;
+  }
+
+  /* Menus, popovers and dialogs */
+  [role="dialog"],
+  [role="menu"],
+  [role="listbox"],
+  [data-radix-popper-content-wrapper] {
+    background-color: var(--mantle);
+    color: var(--text);
+    border-color: var(--surface1);
+  }
+
+  /* Claude's light-surface utilities */
+  .bg-white,
+  [class*="bg-white/"] {
+    background-color: var(--mantle) !important;
+    color: var(--text) !important;
+  }
+
+  /* Buttons and controls */
+  button,
+  [role="button"] {
+    border-color: var(--surface1);
+  }
+
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  textarea:focus-visible,
+  input:focus-visible,
+  [contenteditable="true"]:focus-visible {
+    outline-color: var(--accent) !important;
+  }
+
+  /* Primary accent controls */
+  button[class*="bg-accent"],
+  [class*="bg-accent-brand"] {
+    background-color: var(--accent) !important;
+    color: var(--crust) !important;
+  }
+
+  /* Links */
+  a {
+    color: var(--blue);
+  }
+
+  a:hover {
+    color: var(--lavender);
+  }
+
+  /* Code blocks and inline code */
+  pre,
+  pre code,
+  [class*="code-block"] {
+    background-color: var(--mantle) !important;
+    color: var(--text);
+  }
+
+  code:not(pre code) {
+    background-color: var(--surface1);
+    color: var(--pink);
+    border-radius: 4px;
+    padding: 0.1em 0.3em;
+  }
+
+  /* Syntax highlighting */
+  .hljs,
+  [class*="language-"] {
+    color: var(--text);
+  }
+
+  .hljs-comment,
+  .hljs-quote {
+    color: var(--overlay1);
+    font-style: italic;
+  }
+
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal {
+    color: var(--mauve);
+  }
+
+  .hljs-title,
+  .hljs-function {
+    color: var(--blue);
+  }
+
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-addition {
+    color: var(--green);
+  }
+
+  .hljs-number,
+  .hljs-symbol,
+  .hljs-bullet {
+    color: var(--peach);
+  }
+
+  .hljs-name,
+  .hljs-tag {
+    color: var(--red);
+  }
+
+  .hljs-attribute,
+  .hljs-attr {
+    color: var(--yellow);
+  }
+
+  .hljs-built_in,
+  .hljs-type {
+    color: var(--teal);
+  }
+
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-params {
+    color: var(--flamingo);
+  }
+
+  .hljs-property {
+    color: var(--sky);
+  }
+
+  .hljs-deletion {
+    color: var(--red);
+  }
+
+  /* Borders and scrollbars */
+  hr {
+    border-color: var(--surface1) !important;
+  }
+
+  [class*="border"] {
+    border-color: var(--surface1);
+  }
+
+  * {
+    scrollbar-color: var(--surface1) var(--base);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--surface1);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--overlay0);
   }
 }

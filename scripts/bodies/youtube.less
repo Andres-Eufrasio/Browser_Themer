@@ -184,6 +184,95 @@
       color: @subtext1 !important;
     }
 
+    /* App header background layers (channel/browse pages) */
+    tp-yt-app-header,
+    tp-yt-app-header #background,
+    tp-yt-app-header #backgroundRearLayer,
+    tp-yt-app-header #backgroundFrontLayer,
+    #background.tp-yt-app-header,
+    #backgroundRearLayer.tp-yt-app-header,
+    #backgroundFrontLayer.tp-yt-app-header {
+      background: @base !important;
+      background-color: @base !important;
+    }
+
+    /* Channel page header, sticky tab bar and their containers */
+    ytd-browse[page-subtype="channels"],
+    ytd-browse[page-subtype="channel"],
+    ytd-browse[page-subtype="playlist"],
+    ytd-browse #page-header,
+    ytd-browse #page-header-container,
+    ytd-browse #header,
+    ytd-browse #channel-container,
+    ytd-browse #channel-header,
+    ytd-browse #channel-header-container,
+    ytd-browse #tabs-container,
+    ytd-browse #tabs-inner-container,
+    ytd-browse #chips-wrapper,
+    ytd-browse yt-page-header-renderer,
+    ytd-browse yt-page-header-view-model,
+    ytd-browse .page-header-view-model-wiz,
+    ytd-browse .ytPageHeaderViewModelHost,
+    ytd-browse .ytPageHeaderViewModelPageHeaderContent,
+    ytd-browse .ytPageHeaderBannerViewModelHost,
+    ytd-browse .page-header-sticky-tabs,
+    ytd-browse .ytFlexibleActionsViewModelHost,
+    ytd-browse yt-tab-group-shape,
+    ytd-browse .ytTabGroupShapeHost,
+    ytd-browse .tabGroupShapeHost,
+    ytd-tabbed-page-header,
+    ytd-tabbed-page-header #tabs-container,
+    ytd-tabbed-page-header #tabs-inner-container,
+    ytd-c4-tabbed-header-renderer,
+    ytd-c4-tabbed-header-renderer #channel-container,
+    tp-yt-app-header-layout,
+    tp-yt-app-header-layout #contentContainer,
+    #contentContainer.tp-yt-app-header-layout,
+    tp-yt-app-header-layout > #contentContainer {
+      background: @base !important;
+      background-color: @base !important;
+      --yt-spec-base-background: @base;
+      --yt-spec-raised-background: @base;
+      --yt-spec-general-background-a: @base;
+      --yt-spec-general-background-b: @base;
+      --yt-sys-color-baseline--base-background: @base;
+    }
+
+    /* Hide any gradient/ambient scrim behind the channel header */
+    ytd-browse #page-header::before,
+    ytd-browse #page-header::after,
+    ytd-browse .ytPageHeaderViewModelHost::before,
+    ytd-browse .ytPageHeaderViewModelHost::after {
+      background: transparent !important;
+      background-image: none !important;
+    }
+
+    /* Keep the divider line under the channel tabs visible */
+    ytd-tabbed-page-header #tabs-divider,
+    ytd-tabbed-page-header #divider,
+    ytd-browse .ytTabGroupShapeDivider,
+    ytd-browse .tabGroupShapeDivider {
+      background: @surface1 !important;
+      background-color: @surface1 !important;
+      border-color: @surface1 !important;
+    }
+
+    /* Draw the divider directly under the channel tabs (Home / Videos / ...),
+       so the base-colour backgrounds above can't hide it */
+    ytd-browse yt-tab-group-shape,
+    ytd-browse .ytTabGroupShapeHost,
+    ytd-browse .tabGroupShapeHost,
+    ytd-tabbed-page-header #tabs-inner-container {
+      box-shadow: inset 0 -1px 0 @surface1 !important;
+    }
+
+    /* Selected tab underline stays on top of the divider */
+    .ytTabShapeTabBarSelected {
+      background-color: @text !important;
+      position: relative;
+      z-index: 1;
+    }
+
     /* Left sidebar uses the same base colour as the main page */
     ytd-guide-renderer,
     ytd-mini-guide-renderer,

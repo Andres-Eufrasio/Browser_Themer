@@ -2,13 +2,14 @@
 // `scripts/gen-palettes.mjs` from the single source of truth
 // `scripts/palette-data.mjs`).
 //
-// Each palette (Gruvbox, Everforest, Kanagawa) x two modes (dark, light) x three
-// contrast levels (hard, medium, soft) => one flavour per combination. Each
-// flavour exposes the shared set of semantic colour keys plus the accents.
+// Each palette (Gruvbox, Everforest, Kanagawa, and Catppuccin's four flavours)
+// x two modes (dark, light) x three contrast levels (hard, medium, soft) => one
+// flavour per combination. Each flavour exposes the shared set of semantic
+// colour keys plus the accents.
 
-import rawPalettes from './palettes.json';
+import raw from './palettes.json';
 
-export type PaletteName = 'gruvbox' | 'everforest' | 'kanagawa';
+export type PaletteName = keyof typeof raw.palettes;
 export type Mode = 'dark' | 'light';
 export type Contrast = 'hard' | 'medium' | 'soft';
 export type FlavorName = `${PaletteName}-${Mode}-${Contrast}`;
@@ -26,6 +27,11 @@ export interface Flavor {
 	mode: Mode;
 	contrast: Contrast;
 	dark: boolean;
+	/**
+	 * True when the palette is light or dark on its own, so its flavours read
+	 * the same from either dropdown (Catppuccin's four flavours).
+	 */
+	schemeFixed: boolean;
 	colors: Record<string, ColorEntry>;
 	colorEntries: [string, ColorEntry][];
 }
@@ -34,19 +40,21 @@ export const version = '1.0.0';
 
 const MODES: Mode[] = ['dark', 'light'];
 const CONTRASTS: Contrast[] = ['hard', 'medium', 'soft'];
-const ACCENT_BASES = ['red', 'orange', 'yellow', 'green', 'aqua', 'blue', 'purple'];
-// Every base hue is offered in three intensities (see `scripts/palette-data.mjs`).
-const ACCENT_KEYS = new Set(
-	ACCENT_BASES.flatMap((hue) => [hue, `bright-${hue}`, `deep-${hue}`]),
+
+/** Every accent offered in the UI, in order, with its display label. */
+export const accentEntries: [string, string][] = raw.accents.map(
+	({ key, label }) => [key, label],
 );
+
+const ACCENT_KEYS = new Set(raw.accents.map(({ key }) => key));
 
 type RawPalette = Record<Contrast, Record<string, string>>;
 type RawPalettes = Record<
 	PaletteName,
-	{ label: string } & Record<Mode, RawPalette>
+	{ label: string; scheme: Record<Mode, Mode> } & Record<Mode, RawPalette>
 >;
 
-const palettes = rawPalettes as unknown as RawPalettes;
+const palettes = raw.palettes as unknown as RawPalettes;
 
 export const paletteLabels = Object.fromEntries(
 	Object.entries(palettes).map(([palette, { label }]) => [palette, label]),
@@ -78,18 +86,40 @@ function buildColors(
 	return colors;
 }
 
+/** Palettes whose contrast levels all resolve to the same colours. */
+const flatPalettes = new Set(
+	(Object.keys(palettes) as PaletteName[]).filter(
+		(palette) =>
+			new Set(
+				CONTRASTS.map((contrast) =>
+					JSON.stringify(palettes[palette].dark[contrast]),
+				),
+			).size === 1,
+	),
+);
+
+/** True when the Contrast setting has no effect on this palette. */
+export const paletteIgnoresContrast = (palette: PaletteName) =>
+	flatPalettes.has(palette);
+
 export const flavors = {} as Record<FlavorName, Flavor>;
 for (const palette of Object.keys(palettes) as PaletteName[]) {
+	const { scheme } = palettes[palette];
+	const schemeFixed = scheme.dark === scheme.light;
 	for (const mode of MODES) {
 		for (const contrast of CONTRASTS) {
 			const key = `${palette}-${mode}-${contrast}` as FlavorName;
 			const colors = buildColors(palette, mode, contrast);
 			flavors[key] = {
-				name: `${paletteLabels[palette]} ${titleCase(mode)} ${titleCase(contrast)}`,
+				name: schemeFixed
+					? paletteLabels[palette]
+					: `${paletteLabels[palette]} ${titleCase(mode)} ${titleCase(contrast)}`,
 				palette,
 				mode,
 				contrast,
-				dark: mode === 'dark',
+				// The palette's own light/dark side, not the dropdown it came from.
+				dark: scheme[mode] === 'dark',
+				schemeFixed,
 				colors,
 				colorEntries: Object.entries(colors),
 			};
@@ -113,7 +143,3 @@ export const darkFlavorEntries = flavorEntriesFor('dark');
 export const contrastEntries: [Contrast, string][] = CONTRASTS.map(
 	(contrast) => [contrast, titleCase(contrast)],
 );
-
-export const accentEntries: [string, ColorEntry][] = flavors[
-	'gruvbox-dark-medium'
-].colorEntries.filter(([, { accent }]) => accent);

@@ -5,18 +5,26 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { PALETTES, PALETTE_LABELS } from './palette-data.mjs';
+import {
+	ACCENT_CHOICES,
+	PALETTES,
+	PALETTE_LABELS,
+	PALETTE_SCHEMES,
+} from './palette-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const out = {};
+const palettes = {};
 for (const [palette, modes] of Object.entries(PALETTES)) {
-	out[palette] = {
+	palettes[palette] = {
 		label: PALETTE_LABELS[palette],
+		scheme: PALETTE_SCHEMES[palette],
 		dark: modes.dark,
 		light: modes.light,
 	};
 }
+
+const out = { palettes, accents: ACCENT_CHOICES };
 
 const target = path.join(root, 'src', 'palettes.json');
 fs.writeFileSync(target, `${JSON.stringify(out, null, '\t')}\n`);

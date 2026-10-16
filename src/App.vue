@@ -11,12 +11,15 @@ import {
 	themeReadme,
 } from '../scripts/theme.mjs';
 import { createZip } from '../scripts/zip.mjs';
+import { windowsTerminalSnippet } from '../scripts/terminal.mjs';
+import { HOMEPAGE, descriptionFor } from '../scripts/meta.mjs';
 import {
 	accentEntries,
 	contrastEntries,
 	darkFlavorEntries,
 	flavors,
 	lightFlavorEntries,
+	paletteIgnoresContrast,
 	paletteLabels,
 } from './palette';
 
@@ -40,7 +43,11 @@ const previewFlavor = computed<FlavorName>(() => {
 });
 const themeLabel = computed(() => {
 	const flavor = flavors[previewFlavor.value];
-	return `${paletteLabels[flavor.palette]} ${flavor.dark ? 'Dark' : 'Light'}`;
+	// Catppuccin's flavours are already light or dark, so the "Dark"/"Light"
+	// suffix would just repeat what the flavour name says.
+	return flavor.schemeFixed
+		? paletteLabels[flavor.palette]
+		: `${paletteLabels[flavor.palette]} ${flavor.dark ? 'Dark' : 'Light'}`;
 });
 
 // --- Download button contrast -------------------------------------------
@@ -97,12 +104,22 @@ function siteName(name: string) {
 	return name.replace(THEME_SUFFIX, '');
 }
 
-function paletteLabel(flavor: string) {
-	return (
-		paletteLabels[flavor.split('-')[0] as PaletteName] ??
-		paletteLabels.gruvbox
-	);
+function flavorPalette(flavor: string) {
+	// `gruvbox-dark` -> `gruvbox`, `catppuccin-mocha` -> `catppuccin-mocha`.
+	return flavor.replace(/-(dark|light)$/, '') as PaletteName;
 }
+
+function paletteLabel(flavor: string) {
+	return paletteLabels[flavorPalette(flavor)] ?? paletteLabels.gruvbox;
+}
+
+// Both selections are palettes without contrast variants (Catppuccin), so the
+// Contrast dropdown is a no-op; say so instead of leaving it unexplained.
+const contrastIgnored = computed(
+	() =>
+		paletteIgnoresContrast(flavorPalette(get(lightFlavor))) &&
+		paletteIgnoresContrast(flavorPalette(get(darkFlavor))),
+);
 
 function createCustomUserstylesImport() {
 	const light = paletteLabel(get(lightFlavor));
@@ -135,15 +152,25 @@ function createCustomUserstylesImport() {
 				vars.contrast = { ...vars.contrast, value: get(contrast) };
 			}
 
-			const name = `${siteName(userstyle.name)} ${suffix}`;
+			const site = siteName(userstyle.name);
+			const name = `${site} ${suffix}`;
+			const description = descriptionFor(suffix, site);
 			return {
 				...userstyle,
 				name,
-				usercssData: { ...userstyle.usercssData, name, vars },
-				sourceCode: userstyle.sourceCode.replace(
-					/^@name .*$/m,
-					`@name ${name}`,
-				),
+				description,
+				usercssData: {
+					...userstyle.usercssData,
+					name,
+					description,
+					vars,
+				},
+				sourceCode: userstyle.sourceCode
+					.replace(/^@name .*$/m, `@name ${name}`)
+					.replace(
+						/^@description .*$/m,
+						`@description ${description}`,
+					),
 			};
 		});
 
@@ -166,6 +193,7 @@ function getFilteredUserstyles() {
 
 const downloaded = ref(false);
 const themeDownloaded = ref(false);
+const terminalDownloaded = ref(false);
 
 function download() {
 	const blob = new Blob([createCustomUserstylesImport()], {
@@ -228,6 +256,40 @@ function downloadTheme() {
 		set(themeDownloaded, false);
 	}, 1000);
 }
+
+// A Windows Terminal fragment matching the current selection, from the same
+// colour map as the browser theme: only the two `settings.json` keys a theme
+// needs (`schemes` + `themes`), so everything personal is left alone.
+function buildTerminalTheme() {
+	const flavor = flavors[previewFlavor.value];
+	const colors = Object.fromEntries(
+		flavor.colorEntries.map(([token, { hex }]) => [token, hex]),
+	);
+	return formatManifest(
+		windowsTerminalSnippet({
+			name: flavor.name,
+			colors,
+			dark: flavor.dark,
+		}),
+	);
+}
+
+function downloadTerminalTheme() {
+	const name = flavors[previewFlavor.value].name;
+	const blob = new Blob([buildTerminalTheme()], {
+		type: 'application/json',
+	});
+	const href = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = href;
+	link.download = `${name}.json`;
+	link.click();
+	URL.revokeObjectURL(href);
+	set(terminalDownloaded, true);
+	setTimeout(() => {
+		set(terminalDownloaded, false);
+	}, 1000);
+}
 </script>
 
 <template>
@@ -238,7 +300,7 @@ function downloadTheme() {
 				<a
 					class="border border-surface0 border-rounded flex h-auto p2 hover:bg-mantle"
 					aria-label="GitHub repository"
-					href="https://github.com/morhetz/gruvbox"
+					:href="HOMEPAGE"
 					target="_blank"
 				>
 					<div class="self-center i-carbon-logo-github" />
@@ -316,15 +378,22 @@ function downloadTheme() {
 						name="accentColor"
 					>
 						<option
-							v-for="[color, { name }] in accentEntries"
+							v-for="[color, label] in accentEntries"
 							:key="color"
 							:value="color"
 						>
-							{{ name }}
+							{{ label }}
 						</option>
 					</select>
 				</div>
 			</div>
+			<p
+				v-if="contrastIgnored"
+				class="mx-auto text-sm text-overlay1 text-center"
+			>
+				Contrast doesn't affect Catppuccin flavours — the four flavours
+				already run from light to dark.
+			</p>
 			<div class="mx-auto flex flex-col sm:flex-row gap-2 items-center">
 				<button
 					class="border-rounded flex flex-row gap-2 py-2 px-4 justify-center items-center hover:scale-105 transition-transform group"
@@ -353,6 +422,21 @@ function downloadTheme() {
 					/>
 					<i v-if="themeDownloaded" class="i-carbon-checkmark" />
 					<i v-else class="i-carbon-application-web" />
+				</button>
+				<button
+					class="border border-surface0 border-rounded flex flex-row gap-2 py-2 px-4 justify-center items-center bg-surface0 hover:bg-surface1"
+					:title="`Download the ${themeLabel} colours as a Windows Terminal settings fragment`"
+					@click="downloadTerminalTheme()"
+				>
+					<span
+						v-text="
+							terminalDownloaded
+								? 'Theme downloaded!'
+								: 'Terminal theme'
+						"
+					/>
+					<i v-if="terminalDownloaded" class="i-carbon-checkmark" />
+					<i v-else class="i-carbon-terminal" />
 				</button>
 			</div>
 			<div class="mx-auto flex flex-col gap-2 w-full lg:w-3/4">

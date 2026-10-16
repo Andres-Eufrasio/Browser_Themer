@@ -1,5 +1,5 @@
-// Palette definitions for the Gruvbox / Everforest / Kanagawa userstyles
-// library.
+// Palette definitions for the Gruvbox / Everforest / Kanagawa / Catppuccin
+// userstyles library.
 //
 // This is the single source of truth for both:
 //   - `src/palettes.json` (consumed by the app UI / uno preflight)
@@ -30,11 +30,77 @@ export const ACCENTS = ACCENT_BASES.flatMap((hue) =>
 
 export const CONTRASTS = ['hard', 'medium', 'soft'];
 
+// Accents offered in the UI and in the generated `@var select accentColor`,
+// in order: upstream Catppuccin's fifteen names first, then the intensity
+// variants of the shared base hues. A few keys are the same colour in every
+// palette (`peach`/`orange`, `teal`/`aqua`, `mauve`/`purple`), so each is only
+// listed once.
+const ACCENT_NAMES = [
+	'rosewater',
+	'flamingo',
+	'pink',
+	'mauve',
+	'red',
+	'maroon',
+	'peach',
+	'yellow',
+	'green',
+	'teal',
+	'blue',
+	'sapphire',
+	'sky',
+	'lavender',
+	'subtext0',
+];
+// Upstream labelled `subtext0` as "Gray"; keep that name.
+const ACCENT_LABELS = { subtext0: 'Gray' };
+
+function accentTitleCase(key) {
+	return key
+		.split('-')
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(' ');
+}
+
+export const ACCENT_CHOICES = [...ACCENT_NAMES, ...ACCENTS]
+	.filter((key, index, all) => all.indexOf(key) === index)
+	.map((key) => ({ key, label: ACCENT_LABELS[key] ?? accentTitleCase(key) }));
+
 export const PALETTE_LABELS = {
 	gruvbox: 'Gruvbox',
 	everforest: 'Everforest',
 	kanagawa: 'Kanagawa',
+	// Catppuccin's four flavours are palettes of their own: they have no
+	// contrast levels, so the flavour *is* the variant.
+	'catppuccin-latte': 'Catppuccin Latte',
+	'catppuccin-frappe': 'Catppuccin Frappé',
+	'catppuccin-macchiato': 'Catppuccin Macchiato',
+	'catppuccin-mocha': 'Catppuccin Mocha',
 };
+
+// Catppuccin flavours are inherently light or dark, and each one is offered in
+// both dropdowns (as upstream did), so the colour scheme cannot come from the
+// slot the flavour was picked from. Palettes without a fixed scheme take it
+// from the slot instead.
+const FIXED_SCHEMES = {
+	'catppuccin-latte': 'light',
+	'catppuccin-frappe': 'dark',
+	'catppuccin-macchiato': 'dark',
+	'catppuccin-mocha': 'dark',
+};
+
+/** Palette -> { dark, light } colour scheme, independent of the dropdown slot. */
+export const PALETTE_SCHEMES = Object.fromEntries(
+	Object.keys(PALETTE_LABELS).map((palette) => {
+		const fixed = FIXED_SCHEMES[palette];
+		return [
+			palette,
+			fixed
+				? { dark: fixed, light: fixed }
+				: { dark: 'dark', light: 'light' },
+		];
+	}),
+);
 
 // Non-accent colour keys (Catppuccin-compatible names used by the per-style
 // extra variables, plus the surfaces/text ramp).
@@ -499,6 +565,182 @@ const kanagawaAlias = (a) => ({
 	purple: a.purple,
 });
 
+// Catppuccin (https://github.com/catppuccin/catppuccin). Exact hex values from
+// the vendored `@catppuccin/palette` 1.8.0 data (`css/catppuccin.css`), one set
+// per flavour. Latte is the light flavour; Frappé, Macchiato and Mocha are the
+// three dark ones, in increasing darkness.
+const catppuccin = {
+	latte: {
+		rosewater: '#dc8a78',
+		flamingo: '#dd7878',
+		pink: '#ea76cb',
+		mauve: '#8839ef',
+		red: '#d20f39',
+		maroon: '#e64553',
+		peach: '#fe640b',
+		yellow: '#df8e1d',
+		green: '#40a02b',
+		teal: '#179299',
+		sky: '#04a5e5',
+		sapphire: '#209fb5',
+		blue: '#1e66f5',
+		lavender: '#7287fd',
+		text: '#4c4f69',
+		subtext1: '#5c5f77',
+		subtext0: '#6c6f85',
+		overlay2: '#7c7f93',
+		overlay1: '#8c8fa1',
+		overlay0: '#9ca0b0',
+		surface2: '#acb0be',
+		surface1: '#bcc0cc',
+		surface0: '#ccd0da',
+		base: '#eff1f5',
+		mantle: '#e6e9ef',
+		crust: '#dce0e8',
+	},
+	frappe: {
+		rosewater: '#f2d5cf',
+		flamingo: '#eebebe',
+		pink: '#f4b8e4',
+		mauve: '#ca9ee6',
+		red: '#e78284',
+		maroon: '#ea999c',
+		peach: '#ef9f76',
+		yellow: '#e5c890',
+		green: '#a6d189',
+		teal: '#81c8be',
+		sky: '#99d1db',
+		sapphire: '#85c1dc',
+		blue: '#8caaee',
+		lavender: '#babbf1',
+		text: '#c6d0f5',
+		subtext1: '#b5bfe2',
+		subtext0: '#a5adce',
+		overlay2: '#949cbb',
+		overlay1: '#838ba7',
+		overlay0: '#737994',
+		surface2: '#626880',
+		surface1: '#51576d',
+		surface0: '#414559',
+		base: '#303446',
+		mantle: '#292c3c',
+		crust: '#232634',
+	},
+	macchiato: {
+		rosewater: '#f4dbd6',
+		flamingo: '#f0c6c6',
+		pink: '#f5bde6',
+		mauve: '#c6a0f6',
+		red: '#ed8796',
+		maroon: '#ee99a0',
+		peach: '#f5a97f',
+		yellow: '#eed49f',
+		green: '#a6da95',
+		teal: '#8bd5ca',
+		sky: '#91d7e3',
+		sapphire: '#7dc4e4',
+		blue: '#8aadf4',
+		lavender: '#b7bdf8',
+		text: '#cad3f5',
+		subtext1: '#b8c0e0',
+		subtext0: '#a5adcb',
+		overlay2: '#939ab7',
+		overlay1: '#8087a2',
+		overlay0: '#6e738d',
+		surface2: '#5b6078',
+		surface1: '#494d64',
+		surface0: '#363a4f',
+		base: '#24273a',
+		mantle: '#1e2030',
+		crust: '#181926',
+	},
+	mocha: {
+		rosewater: '#f5e0dc',
+		flamingo: '#f2cdcd',
+		pink: '#f5c2e7',
+		mauve: '#cba6f7',
+		red: '#f38ba8',
+		maroon: '#eba0ac',
+		peach: '#fab387',
+		yellow: '#f9e2af',
+		green: '#a6e3a1',
+		teal: '#94e2d5',
+		sky: '#89dceb',
+		sapphire: '#74c7ec',
+		blue: '#89b4fa',
+		lavender: '#b4befe',
+		text: '#cdd6f4',
+		subtext1: '#bac2de',
+		subtext0: '#a6adc8',
+		overlay2: '#9399b2',
+		overlay1: '#7f849c',
+		overlay0: '#6c7086',
+		surface2: '#585b70',
+		surface1: '#45475a',
+		surface0: '#313244',
+		base: '#1e1e2e',
+		mantle: '#181825',
+		crust: '#11111b',
+	},
+};
+
+// Catppuccin has 26 colours: fourteen accents plus the text/overlay/surface
+// ramp, which map onto the shared keys one-to-one. Only the base hues need
+// aliasing (Catppuccin calls them peach/teal/mauve) and the bright/deep
+// variants, which Catppuccin doesn't define, are derived like the other
+// palettes' are.
+function buildCatppuccin(flavor) {
+	const src = catppuccin[flavor];
+	const accents = expandAccents({
+		red: src.red,
+		orange: src.peach,
+		yellow: src.yellow,
+		green: src.green,
+		aqua: src.teal,
+		blue: src.blue,
+		purple: src.mauve,
+	});
+	const alias = {
+		rosewater: src.rosewater,
+		flamingo: src.flamingo,
+		pink: src.pink,
+		mauve: src.mauve,
+		red: src.red,
+		maroon: src.maroon,
+		peach: src.peach,
+		yellow: src.yellow,
+		green: src.green,
+		teal: src.teal,
+		sky: src.sky,
+		sapphire: src.sapphire,
+		blue: src.blue,
+		lavender: src.lavender,
+		orange: src.peach,
+		aqua: src.teal,
+		purple: src.mauve,
+	};
+	const ramp = {
+		text: src.text,
+		subtext1: src.subtext1,
+		subtext0: src.subtext0,
+		overlay2: src.overlay2,
+		overlay1: src.overlay1,
+		overlay0: src.overlay0,
+		surface2: src.surface2,
+		surface1: src.surface1,
+		surface0: src.surface0,
+		base: src.base,
+		mantle: src.mantle,
+		crust: src.crust,
+	};
+	// No contrast variants: all three levels are the same theme.
+	const out = {};
+	for (const contrast of CONTRASTS) {
+		out[contrast] = { ...accents, ...alias, ...ramp };
+	}
+	return out;
+}
+
 // ---------------------------------------------------------------------------
 // Assemble full palettes, keyed by palette -> mode -> contrast.
 // ---------------------------------------------------------------------------
@@ -582,9 +824,31 @@ export const PALETTES = {
 	gruvbox: { dark: buildGruvbox('dark'), light: buildGruvbox('light') },
 	everforest: { dark: buildEverforest('dark'), light: buildEverforest('light') },
 	kanagawa: { dark: buildKanagawa('dark'), light: buildKanagawa('light') },
+	// Catppuccin's flavours are each offered in both dropdowns (upstream listed
+	// all four in both selects), so both slots hold the same colours.
+	'catppuccin-latte': {
+		dark: buildCatppuccin('latte'),
+		light: buildCatppuccin('latte'),
+	},
+	'catppuccin-frappe': {
+		dark: buildCatppuccin('frappe'),
+		light: buildCatppuccin('frappe'),
+	},
+	'catppuccin-macchiato': {
+		dark: buildCatppuccin('macchiato'),
+		light: buildCatppuccin('macchiato'),
+	},
+	'catppuccin-mocha': {
+		dark: buildCatppuccin('mocha'),
+		light: buildCatppuccin('mocha'),
+	},
 };
 
-/** All flavour keys, e.g. `gruvbox-dark`, `everforest-light`, `kanagawa-dark`. */
+/**
+ * All flavour keys, e.g. `gruvbox-dark`, `kanagawa-light`,
+ * `catppuccin-mocha-dark`. `scheme` is the flavour's actual light/dark side
+ * (see PALETTE_SCHEMES); `mode` is the dropdown it was selected from.
+ */
 export const FLAVORS = [];
 for (const palette of Object.keys(PALETTES)) {
 	for (const mode of ['dark', 'light']) {
@@ -592,6 +856,7 @@ for (const palette of Object.keys(PALETTES)) {
 			key: `${palette}-${mode}`,
 			palette,
 			mode,
+			scheme: PALETTE_SCHEMES[palette][mode],
 			label: PALETTE_LABELS[palette],
 		});
 	}
