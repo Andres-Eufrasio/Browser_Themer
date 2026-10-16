@@ -19,6 +19,29 @@ export const SIGNATURE_ACCENT = {
 	'catppuccin-frappe': 'mauve',
 	'catppuccin-macchiato': 'mauve',
 	'catppuccin-mocha': 'mauve',
+	// Tier 1: Rosé Pine is known for its love/rose pink, Tokyo Night for its
+	// blue, Flexoki for its warm orange and Dracula/Alucard for their purple.
+	'rose-pine': 'pink',
+	'rose-pine-moon': 'pink',
+	'rose-pine-dawn': 'pink',
+	'tokyo-night': 'blue',
+	'tokyo-night-storm': 'blue',
+	'tokyo-night-light': 'blue',
+	'flexoki-dark': 'orange',
+	'flexoki-light': 'orange',
+	dracula: 'purple',
+	alucard: 'purple',
+	// Modus and Nord are both known for their blues; Solarized for its blue and
+	// Ayu for its yellow/gold accent.
+	'modus-operandi': 'blue',
+	'modus-vivendi': 'blue',
+	nord: 'blue',
+	'nord-light': 'blue',
+	solarized: 'blue',
+	'solarized-light': 'blue',
+	'ayu-dark': 'yellow',
+	'ayu-mirage': 'yellow',
+	'ayu-light': 'yellow',
 };
 
 // Placeholder token meaning "use the flavour's selected accent".

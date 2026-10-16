@@ -2,10 +2,13 @@
 // `scripts/gen-palettes.mjs` from the single source of truth
 // `scripts/palette-data.mjs`).
 //
-// Each palette (Gruvbox, Everforest, Kanagawa, and Catppuccin's four flavours)
-// x two modes (dark, light) x three contrast levels (hard, medium, soft) => one
+// Each palette (Gruvbox, Everforest, Kanagawa, Catppuccin's four flavours and
+// the fixed-scheme variants: Rosé Pine, Tokyo Night, Flexoki, Dracula/Alucard,
+// Modus, Nord, Solarized, Ayu) x two modes (dark, light) x three contrast
+// levels (hard, medium, soft) => one
 // flavour per combination. Each flavour exposes the shared set of semantic
-// colour keys plus the accents.
+// colour keys plus the accents. Palettes that ship no contrast levels expose
+// the same colours at all three.
 
 import raw from './palettes.json';
 
@@ -29,7 +32,8 @@ export interface Flavor {
 	dark: boolean;
 	/**
 	 * True when the palette is light or dark on its own, so its flavours read
-	 * the same from either dropdown (Catppuccin's four flavours).
+	 * the same from either dropdown (Catppuccin's flavours, Rosé Pine, Tokyo
+	 * Night, Flexoki, Dracula, Modus, Nord, Solarized, Ayu).
 	 */
 	schemeFixed: boolean;
 	colors: Record<string, ColorEntry>;

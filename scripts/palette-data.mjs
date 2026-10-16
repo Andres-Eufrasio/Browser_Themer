@@ -76,6 +76,28 @@ export const PALETTE_LABELS = {
 	'catppuccin-frappe': 'Catppuccin Frappé',
 	'catppuccin-macchiato': 'Catppuccin Macchiato',
 	'catppuccin-mocha': 'Catppuccin Mocha',
+	// The Tier-1 palettes. Like Catppuccin's flavours these have no contrast
+	// levels, so each variant (Rosé Pine main/moon/dawn, Tokyo Night
+	// night/storm/light, Flexoki and Dracula/Alucard) is a palette of its own.
+	'rose-pine': 'Rosé Pine',
+	'rose-pine-moon': 'Rosé Pine Moon',
+	'rose-pine-dawn': 'Rosé Pine Dawn',
+	'tokyo-night': 'Tokyo Night',
+	'tokyo-night-storm': 'Tokyo Night Storm',
+	'tokyo-night-light': 'Tokyo Night Light',
+	'flexoki-dark': 'Flexoki Dark',
+	'flexoki-light': 'Flexoki Light',
+	dracula: 'Dracula',
+	alucard: 'Alucard',
+	'modus-operandi': 'Modus Operandi',
+	'modus-vivendi': 'Modus Vivendi',
+	nord: 'Nord',
+	'nord-light': 'Nord Light',
+	solarized: 'Solarized',
+	'solarized-light': 'Solarized Light',
+	'ayu-dark': 'Ayu Dark',
+	'ayu-mirage': 'Ayu Mirage',
+	'ayu-light': 'Ayu Light',
 };
 
 // Catppuccin flavours are inherently light or dark, and each one is offered in
@@ -87,6 +109,25 @@ const FIXED_SCHEMES = {
 	'catppuccin-frappe': 'dark',
 	'catppuccin-macchiato': 'dark',
 	'catppuccin-mocha': 'dark',
+	'rose-pine': 'dark',
+	'rose-pine-moon': 'dark',
+	'rose-pine-dawn': 'light',
+	'tokyo-night': 'dark',
+	'tokyo-night-storm': 'dark',
+	'tokyo-night-light': 'light',
+	'flexoki-dark': 'dark',
+	'flexoki-light': 'light',
+	dracula: 'dark',
+	alucard: 'light',
+	'modus-operandi': 'light',
+	'modus-vivendi': 'dark',
+	nord: 'dark',
+	'nord-light': 'light',
+	solarized: 'dark',
+	'solarized-light': 'light',
+	'ayu-dark': 'dark',
+	'ayu-mirage': 'dark',
+	'ayu-light': 'light',
 };
 
 /** Palette -> { dark, light } colour scheme, independent of the dropdown slot. */
@@ -143,7 +184,11 @@ function hexToRgb(hex) {
 
 function rgbToHex([r, g, b]) {
 	return `#${[r, g, b]
-		.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0'))
+		.map((v) =>
+			Math.max(0, Math.min(255, Math.round(v)))
+				.toString(16)
+				.padStart(2, '0'),
+		)
 		.join('')}`;
 }
 
@@ -205,6 +250,21 @@ function shift(hex, deltaLightness, deltaSaturation) {
 		]),
 	);
 }
+
+/** Linear sRGB mix: `t = 0` returns `a`, `t = 1` returns `b`. */
+function mix(a, b, t) {
+	const [ar, ag, ab] = hexToRgb(a);
+	const [br, bg, bb] = hexToRgb(b);
+	return rgbToHex([
+		ar + (br - ar) * t,
+		ag + (bg - ag) * t,
+		ab + (bb - ab) * t,
+	]);
+}
+
+/** Mix towards black / white (used to fill ramp steps a palette doesn't name). */
+const darker = (hex, t) => mix(hex, '#000000', t);
+const lighter = (hex, t) => mix(hex, '#ffffff', t);
 
 const LIGHTEN = [0.14, 0.1];
 const DARKEN = [-0.14, 0.1];
@@ -353,7 +413,12 @@ const everforest = {
 			blue: '#7fbbb3',
 			purple: '#d699b6',
 		},
-		grey: { grey0: '#7a8478', grey1: '#859289', grey2: '#9da9a0', fg: '#d3c6aa' },
+		grey: {
+			grey0: '#7a8478',
+			grey1: '#859289',
+			grey2: '#9da9a0',
+			fg: '#d3c6aa',
+		},
 		// crust is the next-darkest step of the background ramp.
 		crust: { hard: '#191d1f', medium: '#1e2326', soft: '#232a2e' },
 		surface: {
@@ -396,7 +461,12 @@ const everforest = {
 			blue: '#3a94c5',
 			purple: '#df69ba',
 		},
-		grey: { grey0: '#a6b0a0', grey1: '#939f91', grey2: '#829181', fg: '#5c6a72' },
+		grey: {
+			grey0: '#a6b0a0',
+			grey1: '#939f91',
+			grey2: '#829181',
+			fg: '#5c6a72',
+		},
 		crust: { hard: '#edeada', medium: '#e6e2cc', soft: '#ddd8be' },
 		surface: {
 			hard: {
@@ -820,9 +890,778 @@ function buildKanagawa(mode) {
 	return out;
 }
 
+// ---------------------------------------------------------------------------
+// Tier-1 palettes
+//
+// Rosé Pine, Tokyo Night, Flexoki, Dracula/Alucard. Like Catppuccin's flavours,
+// every variant is a palette of its own: upstream ships no contrast levels, so
+// all three Contrast settings resolve to the same colours (the app says so when
+// one is selected). Where a palette doesn't name a ramp step, it is mixed from
+// the palette's own roles; light variants step the opposite way from dark ones.
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a palette whose contrast levels are all identical. `seed` is
+ * `{ accents, alias, ramp }` where `ramp` already lists text -> crust in the
+ * canonical key order.
+ */
+function buildFlat(seed) {
+	const colors = {
+		...expandAccents(seed.accents),
+		...seed.alias,
+		...seed.ramp,
+	};
+	const out = {};
+	for (const contrast of CONTRASTS) out[contrast] = { ...colors };
+	return out;
+}
+
+/** A fixed-scheme palette: both dropdown slots hold the same colours. */
+function fixed(seed) {
+	return { dark: buildFlat(seed), light: buildFlat(seed) };
+}
+
+// Rosé Pine (https://rosepinetheme.com, palette data from `rose-pine/palette`).
+// Main and Moon are the dark variants, Dawn the light one. The palette has no
+// green, so `green`/`blue` both fall back to pine; the warm end is love/rose.
+const rosePine = {
+	main: {
+		base: '#191724',
+		surface: '#1f1d2e',
+		overlay: '#26233a',
+		muted: '#6e6a86',
+		subtle: '#908caa',
+		text: '#e0def4',
+		love: '#eb6f92',
+		gold: '#f6c177',
+		rose: '#ebbcba',
+		pine: '#31748f',
+		foam: '#9ccfd8',
+		iris: '#c4a7e7',
+	},
+	moon: {
+		base: '#232136',
+		surface: '#2a273f',
+		overlay: '#393552',
+		muted: '#6e6a86',
+		subtle: '#908caa',
+		text: '#e0def4',
+		love: '#eb6f92',
+		gold: '#f6c177',
+		rose: '#ea9a97',
+		pine: '#3e8fb0',
+		foam: '#9ccfd8',
+		iris: '#c4a7e7',
+	},
+	dawn: {
+		base: '#faf4ed',
+		surface: '#fffaf3',
+		overlay: '#f2e9e1',
+		muted: '#9893a5',
+		subtle: '#797593',
+		text: '#464261',
+		love: '#b4637a',
+		gold: '#ea9d34',
+		rose: '#d7827e',
+		pine: '#286983',
+		foam: '#56949f',
+		iris: '#907aa9',
+	},
+};
+
+function rosePineSeed(r, mode) {
+	const dark = mode === 'dark';
+	return {
+		accents: {
+			red: r.love,
+			orange: r.rose,
+			yellow: r.gold,
+			green: r.pine,
+			aqua: r.foam,
+			blue: r.pine,
+			purple: r.iris,
+		},
+		alias: {
+			rosewater: r.rose,
+			flamingo: r.love,
+			pink: r.love,
+			mauve: r.iris,
+			maroon: r.love,
+			peach: r.rose,
+			teal: r.foam,
+			sky: r.foam,
+			sapphire: r.pine,
+			lavender: r.iris,
+		},
+		ramp: dark
+			? {
+					text: r.text,
+					subtext1: mix(r.text, r.subtle, 0.5),
+					subtext0: r.subtle,
+					overlay2: mix(r.subtle, r.muted, 0.5),
+					overlay1: r.muted,
+					overlay0: mix(r.muted, r.overlay, 0.5),
+					surface2: r.overlay,
+					surface1: mix(r.overlay, r.surface, 0.5),
+					surface0: r.surface,
+					base: r.base,
+					mantle: darker(r.base, 0.18),
+					crust: darker(r.base, 0.34),
+				}
+			: {
+					text: r.text,
+					subtext1: mix(r.subtle, r.text, 0.5),
+					subtext0: r.subtle,
+					overlay2: mix(r.subtle, r.muted, 0.5),
+					overlay1: r.muted,
+					overlay0: mix(r.muted, r.base, 0.3),
+					surface2: mix(r.muted, r.base, 0.5),
+					surface1: mix(r.muted, r.base, 0.68),
+					surface0: mix(r.muted, r.base, 0.84),
+					base: r.base,
+					mantle: mix(r.base, r.text, 0.05),
+					crust: mix(r.base, r.text, 0.1),
+				},
+	};
+}
+
+// Tokyo Night (enkia/tokyo-night-vscode-theme for the editor colours, plus the
+// extra background steps from folke/tokyonight.nvim). Night and Storm are dark,
+// Light is the light variant.
+const tokyoNightAccents = {
+	dark: {
+		red: '#f7768e',
+		orange: '#ff9e64',
+		yellow: '#e0af68',
+		green: '#9ece6a',
+		aqua: '#7dcfff',
+		blue: '#7aa2f7',
+		purple: '#bb9af7',
+	},
+	light: {
+		red: '#8c4351',
+		orange: '#965027',
+		yellow: '#8f5e15',
+		green: '#385f0d',
+		aqua: '#006c86',
+		blue: '#2959aa',
+		purple: '#65359d',
+	},
+};
+
+const tokyoNightAlias = {
+	dark: {
+		rosewater: '#e0af68',
+		flamingo: '#f7768e',
+		pink: '#ff007c',
+		mauve: '#bb9af7',
+		maroon: '#f7768e',
+		peach: '#ff9e64',
+		teal: '#73daca',
+		sky: '#89ddff',
+		sapphire: '#2ac3de',
+		lavender: '#bb9af7',
+	},
+	light: {
+		rosewater: '#b05467',
+		flamingo: '#8c4351',
+		pink: '#b05467',
+		mauve: '#65359d',
+		maroon: '#8c4351',
+		peach: '#965027',
+		teal: '#33635c',
+		sky: '#0f4b6e',
+		sapphire: '#006c86',
+		lavender: '#65359d',
+	},
+};
+
+const tokyoNightFg = {
+	dark: {
+		text: '#c0caf5',
+		subtext1: '#a9b1d6',
+		subtext0: '#9aa5ce',
+		overlay2: mix('#737aa2', '#9aa5ce', 0.5),
+		overlay1: '#737aa2',
+	},
+	light: {
+		text: '#343b59',
+		subtext1: mix('#343b59', '#606269', 0.35),
+		subtext0: '#484c61',
+		overlay2: '#606269',
+		overlay1: '#888b94',
+	},
+};
+
+const tokyoNightSurface = {
+	night: {
+		overlay0: '#545c7e',
+		surface2: '#414868',
+		surface1: '#292e42',
+		surface0: '#202330',
+		base: '#1a1b26',
+		mantle: '#16161e',
+		crust: '#0f0f14',
+	},
+	storm: {
+		overlay0: '#545c7e',
+		surface2: '#414868',
+		surface1: '#2c324a',
+		surface0: '#292e42',
+		base: '#24283b',
+		mantle: '#1f2335',
+		crust: '#1b1e2d',
+	},
+	light: {
+		overlay0: '#9da0ab',
+		surface2: mix('#c1c2c7', '#9da0ab', 0.65),
+		surface1: mix('#c1c2c7', '#e6e7ed', 0.4),
+		surface0: mix('#c1c2c7', '#e6e7ed', 0.6),
+		base: '#e6e7ed',
+		mantle: mix('#c1c2c7', '#e6e7ed', 0.88),
+		crust: mix('#c1c2c7', '#e6e7ed', 0.75),
+	},
+};
+
+function tokyoNightSeed(variant) {
+	const side = variant === 'light' ? 'light' : 'dark';
+	return {
+		accents: tokyoNightAccents[side],
+		alias: tokyoNightAlias[side],
+		ramp: { ...tokyoNightFg[side], ...tokyoNightSurface[variant] },
+	};
+}
+
+// Flexoki (https://stephango.com/flexoki, `kepano/flexoki`). Every value is one
+// of the palette's own steps from its CSS ramps: light uses the 600-weight
+// accents, dark the 400-weight ones, and the surfaces are the paper/ink greys.
+const flexoki = {
+	light: {
+		accents: {
+			red: '#af3029',
+			orange: '#bc5215',
+			yellow: '#ad8301',
+			green: '#66800b',
+			aqua: '#24837b',
+			blue: '#205ea6',
+			purple: '#5e409d',
+		},
+		alias: {
+			rosewater: '#a02f6f',
+			flamingo: '#af3029',
+			pink: '#a02f6f',
+			mauve: '#5e409d',
+			maroon: '#af3029',
+			peach: '#bc5215',
+			teal: '#24837b',
+			sky: '#4385be',
+			sapphire: '#205ea6',
+			lavender: '#5e409d',
+		},
+		ramp: {
+			text: '#100f0f',
+			subtext1: '#343331',
+			subtext0: '#575653',
+			overlay2: '#6f6e69',
+			overlay1: '#878580',
+			overlay0: '#9f9d96',
+			surface2: '#b7b5ac',
+			surface1: '#cecdc3',
+			surface0: '#dad8ce',
+			base: '#fffcf0',
+			mantle: '#f2f0e5',
+			crust: '#e6e4d9',
+		},
+	},
+	dark: {
+		accents: {
+			red: '#d14d41',
+			orange: '#da702c',
+			yellow: '#d0a215',
+			green: '#879a39',
+			aqua: '#3aa99f',
+			blue: '#4385be',
+			purple: '#8b7ec8',
+		},
+		alias: {
+			rosewater: '#ce5d97',
+			flamingo: '#d14d41',
+			pink: '#ce5d97',
+			mauve: '#8b7ec8',
+			maroon: '#d14d41',
+			peach: '#da702c',
+			teal: '#3aa99f',
+			sky: '#66a0c8',
+			sapphire: '#4385be',
+			lavender: '#8b7ec8',
+		},
+		ramp: {
+			text: '#cecdc3',
+			subtext1: '#b7b5ac',
+			subtext0: '#9f9d96',
+			overlay2: '#878580',
+			overlay1: '#6f6e69',
+			overlay0: '#575653',
+			surface2: '#403e3c',
+			surface1: '#343331',
+			surface0: '#282726',
+			base: '#1c1b1a',
+			mantle: '#100f0f',
+			crust: darker('#100f0f', 0.5),
+		},
+	},
+};
+
+// Dracula (https://draculatheme.com) and its light sibling Alucard, both from
+// the official `dracula/dracula-theme` palette tables. Dracula has no dedicated
+// blue, so `blue` uses the purple its ANSI palette calls blue; the ramp steps
+// between the palette's background / current-line / comment / foreground greys.
+const dracula = {
+	dark: {
+		accents: {
+			red: '#ff5555',
+			orange: '#ffb86c',
+			yellow: '#f1fa8c',
+			green: '#50fa7b',
+			aqua: '#8be9fd',
+			blue: '#bd93f9',
+			purple: '#bd93f9',
+		},
+		alias: {
+			rosewater: '#ff79c6',
+			flamingo: '#ff5555',
+			pink: '#ff79c6',
+			mauve: '#bd93f9',
+			maroon: '#ff5555',
+			peach: '#ffb86c',
+			teal: '#8be9fd',
+			sky: '#8be9fd',
+			sapphire: '#bd93f9',
+			lavender: '#bd93f9',
+		},
+		ramp: {
+			text: '#f8f8f2',
+			subtext1: mix('#6272a4', '#f8f8f2', 0.75),
+			subtext0: mix('#6272a4', '#f8f8f2', 0.5),
+			overlay2: mix('#6272a4', '#f8f8f2', 0.25),
+			overlay1: '#6272a4',
+			overlay0: mix('#44475a', '#6272a4', 0.7),
+			surface2: mix('#44475a', '#6272a4', 0.35),
+			surface1: '#44475a',
+			surface0: mix('#282a36', '#44475a', 0.45),
+			base: '#282a36',
+			mantle: darker('#282a36', 0.18),
+			crust: darker('#282a36', 0.34),
+		},
+	},
+	light: {
+		accents: {
+			red: '#cb3a2a',
+			orange: '#a34d14',
+			yellow: '#846e15',
+			green: '#14710a',
+			aqua: '#036a96',
+			blue: '#644ac9',
+			purple: '#644ac9',
+		},
+		alias: {
+			rosewater: '#a3144d',
+			flamingo: '#cb3a2a',
+			pink: '#a3144d',
+			mauve: '#644ac9',
+			maroon: '#cb3a2a',
+			peach: '#a34d14',
+			teal: '#036a96',
+			sky: '#036a96',
+			sapphire: '#644ac9',
+			lavender: '#644ac9',
+		},
+		ramp: {
+			text: '#1f1f1f',
+			subtext1: mix('#6c664b', '#1f1f1f', 0.6),
+			subtext0: mix('#6c664b', '#1f1f1f', 0.25),
+			overlay2: '#6c664b',
+			overlay1: mix('#6c664b', '#cfcfde', 0.35),
+			overlay0: mix('#6c664b', '#cfcfde', 0.6),
+			surface2: '#cfcfde',
+			surface1: mix('#fffbeb', '#cfcfde', 0.75),
+			surface0: mix('#fffbeb', '#cfcfde', 0.55),
+			base: '#fffbeb',
+			mantle: mix('#fffbeb', '#6c664b', 0.05),
+			crust: mix('#fffbeb', '#6c664b', 0.1),
+		},
+	},
+};
+
+// Modus themes (https://protesilaos.com/emacs/modus-themes). Operandi is the
+// light theme, Vivendi the dark one; both are built from the same semantic
+// names (`bg-main`, `bg-dim`, `bg-active`, `bg-inactive`, `border`, `fg-main`,
+// `fg-dim`, plus six accent hues x five shades). The greys Modus names map
+// straight onto the ramp and the accent foregrounds onto the seven base hues.
+const modus = {
+	operandi: {
+		accents: {
+			red: '#a60000',
+			orange: '#972500', // red-warmer
+			yellow: '#6f5500',
+			green: '#006800',
+			aqua: '#005e8b', // cyan
+			blue: '#0031a9',
+			purple: '#721045', // magenta
+		},
+		alias: {
+			rosewater: '#6c501c', // gold
+			flamingo: '#a0132f', // red-cooler
+			pink: '#8f0075', // magenta-warmer
+			mauve: '#531ab6', // magenta-cooler
+			maroon: '#7f0000', // red-faint
+			peach: '#8a290f', // rust
+			teal: '#005f5f', // cyan-cooler
+			sky: '#3f578f', // cyan-warmer
+			sapphire: '#0000b0', // blue-cooler
+			lavender: '#7c318f', // magenta-faint
+		},
+		ramp: {
+			text: '#000000', // fg-main
+			subtext1: mix('#595959', '#000000', 0.5),
+			subtext0: '#595959', // fg-dim
+			overlay2: mix('#9f9f9f', '#595959', 0.5),
+			overlay1: '#9f9f9f', // border
+			overlay0: mix('#c4c4c4', '#9f9f9f', 0.5),
+			surface2: '#c4c4c4', // bg-active
+			surface1: mix('#e0e0e0', '#c4c4c4', 0.5),
+			surface0: '#e0e0e0', // bg-inactive
+			base: '#ffffff', // bg-main
+			mantle: mix('#ffffff', '#f2f2f2', 0.4),
+			crust: '#f2f2f2', // bg-dim
+		},
+	},
+	vivendi: {
+		accents: {
+			red: '#ff5f59',
+			orange: '#ff6b55', // red-warmer
+			yellow: '#d0bc00',
+			green: '#44bc44',
+			aqua: '#00d3d0', // cyan
+			blue: '#2fafff',
+			purple: '#b6a0ff', // magenta-cooler
+		},
+		alias: {
+			rosewater: '#c0965b', // gold
+			flamingo: '#ff7f86', // red-cooler
+			pink: '#feacd0', // magenta
+			mauve: '#b6a0ff', // magenta-cooler
+			maroon: '#ff9580', // red-faint
+			peach: '#db7b5f', // rust
+			teal: '#6ae4b9', // cyan-cooler
+			sky: '#4ae2f0', // cyan-warmer
+			sapphire: '#00bcff', // blue-cooler
+			lavender: '#9099d9', // indigo
+		},
+		ramp: {
+			text: '#ffffff', // fg-main
+			subtext1: mix('#989898', '#ffffff', 0.5),
+			subtext0: '#989898', // fg-dim
+			overlay2: mix('#646464', '#989898', 0.5),
+			overlay1: '#646464', // border
+			overlay0: mix('#535353', '#646464', 0.5),
+			surface2: '#535353', // bg-active
+			surface1: '#303030', // bg-inactive
+			surface0: '#1e1e1e', // bg-dim
+			base: '#000000', // bg-main
+			mantle: '#000000',
+			crust: '#000000',
+		},
+	},
+};
+
+// Nord (https://www.nordtheme.com/docs/colors-and-palettes). Upstream only
+// ships the dark "Polar Night" theme; the light variant uses "Snow Storm"
+// (nord4 nord6) for its surfaces, so it is a derivation rather than an
+// invention. Only four accent hues exist (Frost blues plus Aurora), so `aqua`,
+// `green` and `purple` pick the closest Nord colours.
+const nord = {
+	dark: {
+		accents: {
+			red: '#bf616a', // nord11
+			orange: '#d08770', // nord12
+			yellow: '#ebcb8b', // nord13
+			green: '#a3be8c', // nord14
+			aqua: '#8fbcbb', // nord7
+			blue: '#81a1c1', // nord9
+			purple: '#b48ead', // nord15
+		},
+		alias: {
+			rosewater: '#d08770', // nord12
+			flamingo: '#bf616a', // nord11
+			pink: '#b48ead', // nord15
+			mauve: '#b48ead', // nord15
+			maroon: '#bf616a', // nord11
+			peach: '#d08770', // nord12
+			teal: '#8fbcbb', // nord7
+			sky: '#88c0d0', // nord8
+			sapphire: '#5e81ac', // nord10
+			lavender: '#b48ead', // nord15
+		},
+		ramp: {
+			text: '#eceff4', // nord6
+			subtext1: '#e5e9f0', // nord5
+			subtext0: '#d8dee9', // nord4
+			overlay2: mix('#4c566a', '#d8dee9', 0.66),
+			overlay1: mix('#4c566a', '#d8dee9', 0.33),
+			overlay0: '#4c566a', // nord3
+			surface2: '#434c5e', // nord2
+			surface1: '#3b4252', // nord1
+			surface0: mix('#2e3440', '#3b4252', 0.5),
+			base: '#2e3440', // nord0
+			mantle: darker('#2e3440', 0.2),
+			crust: darker('#2e3440', 0.4),
+		},
+	},
+	light: {
+		accents: {
+			red: '#bf616a',
+			orange: '#d08770',
+			yellow: '#ebcb8b',
+			green: '#a3be8c',
+			aqua: '#8fbcbb',
+			blue: '#81a1c1',
+			purple: '#b48ead',
+		},
+		alias: {
+			rosewater: '#d08770',
+			flamingo: '#bf616a',
+			pink: '#b48ead',
+			mauve: '#b48ead',
+			maroon: '#bf616a',
+			peach: '#d08770',
+			teal: '#8fbcbb',
+			sky: '#88c0d0',
+			sapphire: '#5e81ac',
+			lavender: '#b48ead',
+		},
+		ramp: {
+			text: '#2e3440', // nord0
+			subtext1: '#3b4252', // nord1
+			subtext0: '#434c5e', // nord2
+			overlay2: mix('#4c566a', '#434c5e', 0.5),
+			overlay1: '#4c566a', // nord3
+			overlay0: mix('#d8dee9', '#4c566a', 0.65),
+			surface2: mix('#d8dee9', '#4c566a', 0.5),
+			surface1: mix('#d8dee9', '#4c566a', 0.3),
+			surface0: '#d8dee9', // nord4
+			base: '#eceff4', // nord6
+			mantle: '#e5e9f0', // nord5
+			crust: mix('#e5e9f0', '#d8dee9', 0.5),
+		},
+	},
+};
+
+// Solarized (https://ethanschoonover.com/solarized/). One sixteen-colour
+// palette serves both themes: the greys run base03 (darkest) to base3
+// (lightest), and the eight accents are the same in each. `purple` is Solarized
+// violet, `pink`/`rosewater` its magenta.
+const solarized = {
+	dark: {
+		accents: {
+			red: '#dc322f',
+			orange: '#cb4b16',
+			yellow: '#b58900',
+			green: '#859900',
+			aqua: '#2aa198', // cyan
+			blue: '#268bd2',
+			purple: '#6c71c4', // violet
+		},
+		alias: {
+			rosewater: '#d33682', // magenta
+			flamingo: '#dc322f', // red
+			pink: '#d33682', // magenta
+			mauve: '#6c71c4', // violet
+			maroon: '#cb4b16', // orange
+			peach: '#cb4b16', // orange
+			teal: '#2aa198', // cyan
+			sky: '#2aa198', // cyan
+			sapphire: '#268bd2', // blue
+			lavender: '#6c71c4', // violet
+		},
+		ramp: {
+			text: '#93a1a1', // base1
+			subtext1: '#839496', // base0
+			subtext0: '#657b83', // base00
+			overlay2: '#586e75', // base01
+			overlay1: mix('#586e75', '#073642', 0.5),
+			overlay0: mix('#586e75', '#073642', 0.75),
+			surface2: '#073642', // base02
+			surface1: mix('#073642', '#002b36', 0.5),
+			surface0: mix('#073642', '#002b36', 0.75),
+			base: '#002b36', // base03
+			mantle: darker('#002b36', 0.15),
+			crust: darker('#002b36', 0.3),
+		},
+	},
+	light: {
+		accents: {
+			red: '#dc322f',
+			orange: '#cb4b16',
+			yellow: '#b58900',
+			green: '#859900',
+			aqua: '#2aa198',
+			blue: '#268bd2',
+			purple: '#6c71c4',
+		},
+		alias: {
+			rosewater: '#d33682',
+			flamingo: '#dc322f',
+			pink: '#d33682',
+			mauve: '#6c71c4',
+			maroon: '#cb4b16',
+			peach: '#cb4b16',
+			teal: '#2aa198',
+			sky: '#2aa198',
+			sapphire: '#268bd2',
+			lavender: '#6c71c4',
+		},
+		ramp: {
+			text: '#586e75', // base01
+			subtext1: '#657b83', // base00
+			subtext0: '#839496', // base0
+			overlay2: '#93a1a1', // base1
+			overlay1: mix('#93a1a1', '#eee8d5', 0.5),
+			overlay0: mix('#93a1a1', '#eee8d5', 0.75),
+			surface2: '#eee8d5', // base2
+			surface1: mix('#eee8d5', '#fdf6e3', 0.15),
+			surface0: mix('#eee8d5', '#fdf6e3', 0.35),
+			base: '#fdf6e3', // base3
+			mantle: mix('#fdf6e3', '#eee8d5', 0.35),
+			crust: mix('#fdf6e3', '#eee8d5', 0.6),
+		},
+	},
+};
+
+// Ayu (https://ayutheme.com, resolved colours from the `ayu` 9.1.0 npm package).
+// Dark and Mirage are the two dark themes, Light the light one. `aqua` is Ayu's
+// teal, `purple` its (pink-ish) purple and `yellow`/`orange` its yellow/orange;
+// the greys come from the package's `gray` ramp and the still greys.
+const ayu = {
+	dark: {
+		accents: {
+			red: '#f07178',
+			orange: '#ff8f40',
+			yellow: '#ffb454',
+			green: '#aad94c',
+			aqua: '#95e6cb', // teal
+			blue: '#59c2ff',
+			purple: '#d2a6ff',
+		},
+		alias: {
+			rosewater: '#f6b18f', // pink l4
+			flamingo: '#f07178', // red l2
+			pink: '#f29668', // pink l3
+			mauve: '#d2a6ff', // purple l3
+			maroon: '#f07178', // red l2
+			peach: '#e6c08a', // peach l4
+			teal: '#95e6cb', // teal l5
+			sky: '#39bae6', // indigo l2
+			sapphire: '#59c2ff', // blue l3
+			lavender: '#d2a6ff', // purple l3
+		},
+		ramp: {
+			text: '#bfbdb6', // editor.fg
+			subtext1: mix('#bfbdb6', '#5a6673', 0.4),
+			subtext0: mix('#bfbdb6', '#5a6673', 0.65),
+			overlay2: '#667381', // gray l5
+			overlay1: '#5a6673', // gray l4
+			overlay0: '#4d5763', // gray l3
+			surface2: '#404953', // gray l2
+			surface1: '#333b44', // gray l1
+			surface0: '#1b1f29', // ui.line
+			base: '#0d1017', // surface.base
+			mantle: mix('#0d1017', '#010102', 0.4),
+			crust: mix('#0d1017', '#010102', 0.7),
+		},
+	},
+	mirage: {
+		accents: {
+			red: '#f28779',
+			orange: '#ffa659',
+			yellow: '#ffcd66',
+			green: '#d5ff80',
+			aqua: '#95e6cb', // teal l4
+			blue: '#73d0ff',
+			purple: '#dfbfff',
+		},
+		alias: {
+			rosewater: '#f9cab3', // pink l4
+			flamingo: '#f28779', // red l1
+			pink: '#f29e74', // pink l2
+			mauve: '#dfbfff', // purple l4
+			maroon: '#f28779', // red l1
+			peach: '#d9be98', // peach l3
+			teal: '#95e6cb', // teal l4
+			sky: '#5ccfe6', // indigo l2
+			sapphire: '#73d0ff', // blue l3
+			lavender: '#dfbfff', // purple l4
+		},
+		ramp: {
+			text: '#cccac2', // editor.fg
+			subtext1: mix('#cccac2', '#707a8c', 0.4),
+			subtext0: mix('#cccac2', '#707a8c', 0.65),
+			overlay2: '#6e7c8f', // gray l1
+			overlay1: mix('#6e7c8f', '#1f2430', 0.4),
+			overlay0: mix('#6e7c8f', '#1f2430', 0.65),
+			surface2: '#282e3b', // ui.panel
+			surface1: '#242936', // surface.lift
+			surface0: mix('#1f2430', '#242936', 0.5),
+			base: '#1f2430', // surface.base
+			mantle: '#181c26', // surface.sunk
+			crust: '#171b24', // ui.line
+		},
+	},
+	light: {
+		accents: {
+			red: '#f07171',
+			orange: '#fa8532',
+			yellow: '#eba400',
+			green: '#86b300',
+			aqua: '#4cbf99', // teal l3
+			blue: '#22a4e6',
+			purple: '#a37acc',
+		},
+		alias: {
+			rosewater: '#f2a191', // pink l4
+			flamingo: '#f07171', // red l2
+			pink: '#f2a191', // pink l4
+			mauve: '#a37acc', // purple l2
+			maroon: '#f07171', // red l2
+			peach: '#e59645', // peach l3
+			teal: '#4cbf99', // teal l3
+			sky: '#55b4d4', // indigo l3
+			sapphire: '#22a4e6', // blue l2
+			lavender: '#a37acc', // purple l2
+		},
+		ramp: {
+			text: '#5c6166', // editor.fg
+			subtext1: mix('#5c6166', '#828e9f', 0.4),
+			subtext0: mix('#5c6166', '#828e9f', 0.65),
+			overlay2: '#939498', // gray l2
+			overlay1: '#a0a1a4', // gray l3
+			overlay0: '#adaeb1', // gray l4
+			surface2: '#c5c5c8', // gray l5
+			surface1: '#dcdee1',
+			surface0: '#ebeef0', // surface.sunk
+			base: '#f8f9fa', // surface.base
+			mantle: mix('#f8f9fa', '#ebeef0', 0.4),
+			crust: mix('#f8f9fa', '#ebeef0', 0.7),
+		},
+	},
+};
+
 export const PALETTES = {
 	gruvbox: { dark: buildGruvbox('dark'), light: buildGruvbox('light') },
-	everforest: { dark: buildEverforest('dark'), light: buildEverforest('light') },
+	everforest: {
+		dark: buildEverforest('dark'),
+		light: buildEverforest('light'),
+	},
 	kanagawa: { dark: buildKanagawa('dark'), light: buildKanagawa('light') },
 	// Catppuccin's flavours are each offered in both dropdowns (upstream listed
 	// all four in both selects), so both slots hold the same colours.
@@ -842,6 +1681,28 @@ export const PALETTES = {
 		dark: buildCatppuccin('mocha'),
 		light: buildCatppuccin('mocha'),
 	},
+	// Tier 1. Every variant is a fixed-scheme palette (upstream defines no
+	// contrast levels), so both dropdowns show the same colours and the app
+	// flags the inert Contrast setting.
+	'rose-pine': fixed(rosePineSeed(rosePine.main, 'dark')),
+	'rose-pine-moon': fixed(rosePineSeed(rosePine.moon, 'dark')),
+	'rose-pine-dawn': fixed(rosePineSeed(rosePine.dawn, 'light')),
+	'tokyo-night': fixed(tokyoNightSeed('night')),
+	'tokyo-night-storm': fixed(tokyoNightSeed('storm')),
+	'tokyo-night-light': fixed(tokyoNightSeed('light')),
+	'flexoki-dark': fixed(flexoki.dark),
+	'flexoki-light': fixed(flexoki.light),
+	dracula: fixed(dracula.dark),
+	alucard: fixed(dracula.light),
+	'modus-operandi': fixed(modus.operandi),
+	'modus-vivendi': fixed(modus.vivendi),
+	nord: fixed(nord.dark),
+	'nord-light': fixed(nord.light),
+	solarized: fixed(solarized.dark),
+	'solarized-light': fixed(solarized.light),
+	'ayu-dark': fixed(ayu.dark),
+	'ayu-mirage': fixed(ayu.mirage),
+	'ayu-light': fixed(ayu.light),
 };
 
 /**

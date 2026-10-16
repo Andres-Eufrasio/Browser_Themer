@@ -2,28 +2,41 @@
 
 Customize your preferred [Gruvbox](https://github.com/morhetz/gruvbox),
 [Everforest](https://github.com/sainnhe/everforest),
-[Kanagawa](https://github.com/rebelot/kanagawa.nvim) or
-[Catppuccin](https://github.com/catppuccin/catppuccin) palette, contrast level
-and accent color for ported userstyles, and generate a JSON file for installing
-in [Stylus](https://github.com/openstyles/stylus).
+[Kanagawa](https://github.com/rebelot/kanagawa.nvim),
+[Catppuccin](https://github.com/catppuccin/catppuccin),
+[Rosé Pine](https://rosepinetheme.com),
+[Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme),
+[Flexoki](https://stephango.com/flexoki),
+[Dracula](https://draculatheme.com),
+[Nord](https://www.nordtheme.com),
+[Solarized](https://ethanschoonover.com/solarized),
+[Ayu](https://ayutheme.com) or
+[Modus](https://protesilaos.com/emacs/modus-themes) palette, contrast level
+and accent color for ported userstyles, and generate a JSON file for
+installing in [Stylus](https://github.com/openstyles/stylus).
 
-Each userstyle lets you pick a light and dark palette (Gruvbox, Everforest,
-Kanagawa, and Catppuccin's four flavours), a contrast level (hard, medium or
-soft) and an accent color — the fifteen Catppuccin accent names plus the base
-hues in bright/deep intensities.
+Each userstyle lets you pick a light and dark palette, a contrast level (hard,
+medium or soft) and an accent color — the fifteen Catppuccin accent names plus
+the base hues in bright/deep intensities.
 
-Catppuccin is available at every flavour: **Latte** (light) and **Frappé**,
-**Macchiato** and **Mocha** (dark). Each flavour is listed in both the Light and
-Dark Flavor dropdowns, exactly as upstream did, so you can put a dark flavour on
-the light side if you want one. Catppuccin defines no contrast variants, so the
-Contrast setting has no effect on it (the app says so when both selections are
-Catppuccin flavours).
+Gruvbox, Everforest and Kanagawa each ship their own light and dark ramp with
+three real contrast levels. The other palettes name their variants instead:
+**Catppuccin** at every flavour — **Latte** (light) and **Frappé**,
+**Macchiato**, **Mocha** (dark); **Rosé Pine** (main, moon, dawn); **Tokyo
+Night** (night, storm, light); **Flexoki** (dark, light); **Dracula** and its
+light sibling **Alucard**; **Nord** plus a derived **Nord Light**; **Solarized**
+(dark, light); **Ayu** (dark, mirage, light); and **Modus** (operandi light,
+vivendi dark). Because these palettes define no contrast variants, each of their
+variants is listed in both the Light and Dark Flavor dropdowns, and the Contrast
+setting has no effect on them (the app says so when both selections are such a
+palette).
 
 Matching **browser themes** are available too, so the browser chrome agrees with
 the themed sites. `pnpm themes` writes one theme per palette variant to
-`themes/` (22 in total: 18 from Gruvbox/Everforest/Kanagawa ramps plus one per
-Catppuccin flavour), and the app's _Browser theme_ button downloads the theme for
-whatever palette, contrast and accent are currently selected.
+`themes/` (41 in total: 18 from the Gruvbox/Everforest/Kanagawa ramps plus one
+per variant of the other palettes), and the app's _Browser theme_ button
+downloads the theme for whatever palette, contrast and accent are currently
+selected.
 
 - **Chrome / Edge / Brave** — the theme folder is loadable directly:
   `chrome://extensions` → Developer mode → _Load unpacked_ → pick the folder.

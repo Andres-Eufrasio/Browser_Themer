@@ -113,8 +113,10 @@ function paletteLabel(flavor: string) {
 	return paletteLabels[flavorPalette(flavor)] ?? paletteLabels.gruvbox;
 }
 
-// Both selections are palettes without contrast variants (Catppuccin), so the
-// Contrast dropdown is a no-op; say so instead of leaving it unexplained.
+// Both selections are palettes without contrast variants (Catppuccin's
+// flavours, Rosé Pine, Tokyo Night, Flexoki, Dracula, Nord, Solarized, Ayu,
+// Modus), so the Contrast dropdown
+// is a no-op; say so instead of leaving it unexplained.
 const contrastIgnored = computed(
 	() =>
 		paletteIgnoresContrast(flavorPalette(get(lightFlavor))) &&
@@ -391,8 +393,9 @@ function downloadTerminalTheme() {
 				v-if="contrastIgnored"
 				class="mx-auto text-sm text-overlay1 text-center"
 			>
-				Contrast doesn't affect Catppuccin flavours — the four flavours
-				already run from light to dark.
+				Contrast doesn't affect the selected palettes — Catppuccin, Rosé
+				Pine, Tokyo Night, Flexoki, Dracula, Nord, Solarized, Ayu and
+				Modus don't define contrast levels.
 			</p>
 			<div class="mx-auto flex flex-col sm:flex-row gap-2 items-center">
 				<button
