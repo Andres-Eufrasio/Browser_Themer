@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { AccentName, FlavorName } from '@catppuccin/palette';
+import type { FlavorName } from './palette';
 
 import rawUserstylesImport from '../import.json' with { type: 'json' };
 
 import { get, set } from '@vueuse/core';
-import { flavorEntries, flavors } from '@catppuccin/palette';
+import { flavorEntries, flavors } from './palette';
 
-const accentEntries = flavors.latte.colorEntries.filter(
+const accentEntries = flavors.dark.colorEntries.filter(
 	([_, { accent }]) => accent,
 );
 
@@ -17,7 +17,7 @@ const mode = useColorMode<FlavorName>({
 	modes: Object.fromEntries(
 		Object.keys(flavors).map((flavor) => [flavor, flavor]),
 	),
-	initialValue: isDark ? 'mocha' : 'latte',
+	initialValue: isDark ? 'dark' : 'light',
 });
 const { state, next } = useCycleList<FlavorName>(
 	Object.keys(flavors) as FlavorName[],
@@ -27,9 +27,9 @@ const { state, next } = useCycleList<FlavorName>(
 );
 watchEffect(() => set(mode, get(state)));
 
-const darkFlavor = useStorage<FlavorName>('darkFlavor', 'mocha');
-const lightFlavor = useStorage<FlavorName>('lightFlavor', 'latte');
-const accentColor = useStorage<AccentName>('accentColor', 'mauve');
+const darkFlavor = useStorage<FlavorName>('darkFlavor', 'dark');
+const lightFlavor = useStorage<FlavorName>('lightFlavor', 'light');
+const accentColor = useStorage<string>('accentColor', 'orange');
 
 const [settings, ...userstyles] = rawUserstylesImport as [
 	SettingsEntry,
@@ -40,9 +40,15 @@ function createCustomUserstylesImport() {
 	const customSelectedUserstyles = userstyles
 		.filter(({ name }) => get(selectedUserstyles)[name])
 		.map((userstyle) => {
-			userstyle.usercssData.vars.accentColor.value = get(accentColor);
-			userstyle.usercssData.vars.darkFlavor.value = get(darkFlavor);
-			userstyle.usercssData.vars.lightFlavor.value = get(lightFlavor);
+			if (userstyle.usercssData.vars.accentColor) {
+				userstyle.usercssData.vars.accentColor.value = get(accentColor);
+			}
+			if (userstyle.usercssData.vars.darkFlavor) {
+				userstyle.usercssData.vars.darkFlavor.value = get(darkFlavor);
+			}
+			if (userstyle.usercssData.vars.lightFlavor) {
+				userstyle.usercssData.vars.lightFlavor.value = get(lightFlavor);
+			}
 
 			return userstyle;
 		});
@@ -86,12 +92,12 @@ function download() {
 <template>
 	<div class="h-100vh w-full flex flex-col px4 pt4 text-lg gap-24">
 		<header class="flex justify-between">
-			<h1 class="text-3xl">Catppuccin Userstyles Customizer</h1>
+			<h1 class="text-3xl">Gruvbox Userstyles Customizer</h1>
 			<div class="flex flex-row gap-2 h-[min-content]">
 				<a
 					class="border border-surface0 border-rounded flex h-auto p2 hover:bg-mantle"
 					aria-label="GitHub repository"
-					href="https://github.com/uncenter/catppuccin-userstyles-customizer"
+					href="https://github.com/morhetz/gruvbox"
 					target="_blank"
 				>
 					<div class="self-center i-carbon-logo-github" />
@@ -159,9 +165,9 @@ function download() {
 				</div>
 			</div>
 			<button
-				class="border-rounded mx-auto flex flex-row gap-2 bg-mauve text-base py-2 px-4 justify-center items-center hover:scale-105 transition-transform group"
+				class="border-rounded mx-auto flex flex-row gap-2 bg-orange text-base py-2 px-4 justify-center items-center hover:scale-105 transition-transform group"
 				:style="{
-					backgroundColor: `var(--ctp-${get(accentColor)})`,
+					backgroundColor: `var(--gv-${get(accentColor)})`,
 				}"
 				title="Download"
 				@click="download()"
@@ -206,7 +212,7 @@ function download() {
 							class="flex flex-row gap-2 border border-surface0 border-rounded p2 items-center justify-between"
 						>
 							<h2 class="text-xl">
-								{{ userstyle.name.replace(' Catppuccin', ' ') }}
+								{{ userstyle.name.replace(' Gruvbox', ' ') }}
 							</h2>
 							<input
 								type="checkbox"

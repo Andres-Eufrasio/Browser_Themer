@@ -1,6 +1,6 @@
-# Catppuccin Userstyles Customizer
+# Gruvbox Userstyles Customizer
 
-Customize your preferred flavors and accent color for [catppuccin/userstyles](https://github.com/catppuccin/userstyles). Generates a JSON file for installing in Stylus.
+Customize your preferred variants and accent color for [gruvbox](https://github.com/morhetz/gruvbox) userstyles. Generates a JSON file for installing in Stylus.
 
 ## Development
 
