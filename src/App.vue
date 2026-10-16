@@ -5,6 +5,13 @@ import rawUserstylesImport from '../import.json' with { type: 'json' };
 
 import { get, set } from '@vueuse/core';
 import {
+	chromeThemeManifest,
+	firefoxThemeManifest,
+	formatManifest,
+	themeReadme,
+} from '../scripts/theme.mjs';
+import { createZip } from '../scripts/zip.mjs';
+import {
 	accentEntries,
 	contrastEntries,
 	darkFlavorEntries,
@@ -91,7 +98,10 @@ function siteName(name: string) {
 }
 
 function paletteLabel(flavor: string) {
-	return paletteLabels[flavor.split('-')[0] as PaletteName] ?? paletteLabels.gruvbox;
+	return (
+		paletteLabels[flavor.split('-')[0] as PaletteName] ??
+		paletteLabels.gruvbox
+	);
 }
 
 function createCustomUserstylesImport() {
@@ -104,13 +114,22 @@ function createCustomUserstylesImport() {
 		.map((userstyle) => {
 			const vars = { ...userstyle.usercssData.vars };
 			if (vars.accentColor) {
-				vars.accentColor = { ...vars.accentColor, value: get(accentColor) };
+				vars.accentColor = {
+					...vars.accentColor,
+					value: get(accentColor),
+				};
 			}
 			if (vars.darkFlavor) {
-				vars.darkFlavor = { ...vars.darkFlavor, value: get(darkFlavor) };
+				vars.darkFlavor = {
+					...vars.darkFlavor,
+					value: get(darkFlavor),
+				};
 			}
 			if (vars.lightFlavor) {
-				vars.lightFlavor = { ...vars.lightFlavor, value: get(lightFlavor) };
+				vars.lightFlavor = {
+					...vars.lightFlavor,
+					value: get(lightFlavor),
+				};
 			}
 			if (vars.contrast) {
 				vars.contrast = { ...vars.contrast, value: get(contrast) };
@@ -146,6 +165,7 @@ function getFilteredUserstyles() {
 }
 
 const downloaded = ref(false);
+const themeDownloaded = ref(false);
 
 function download() {
 	const blob = new Blob([createCustomUserstylesImport()], {
@@ -160,6 +180,52 @@ function download() {
 	set(downloaded, true);
 	setTimeout(() => {
 		set(downloaded, false);
+	}, 1000);
+}
+
+// A browser theme matching the current selection, in the same layout as the
+// pre-generated `themes/` folders (see `scripts/build-themes.mjs`).
+function buildBrowserTheme() {
+	const flavor = flavors[previewFlavor.value];
+	const colors = Object.fromEntries(
+		flavor.colorEntries.map(([token, { hex }]) => [token, hex]),
+	);
+	const accent = get(accentColor);
+	const name = flavor.name;
+
+	const chrome = formatManifest(
+		chromeThemeManifest({ name, colors, accent }),
+	);
+	const firefox = formatManifest(
+		firefoxThemeManifest({ name, colors, accent, dark: flavor.dark }),
+	);
+
+	return {
+		name,
+		files: [
+			{ path: `${name}/manifest.json`, data: chrome },
+			{ path: `${name}/firefox/manifest.json`, data: firefox },
+			{
+				path: `${name}/${name}-firefox.xpi`,
+				data: createZip([{ path: 'manifest.json', data: firefox }]),
+			},
+			{ path: `${name}/readme.txt`, data: themeReadme(name) },
+		],
+	};
+}
+
+function downloadTheme() {
+	const { name, files } = buildBrowserTheme();
+	const blob = new Blob([createZip(files)], { type: 'application/zip' });
+	const href = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = href;
+	link.download = `${name}.zip`;
+	link.click();
+	URL.revokeObjectURL(href);
+	set(themeDownloaded, true);
+	setTimeout(() => {
+		set(themeDownloaded, false);
 	}, 1000);
 }
 </script>
@@ -259,16 +325,36 @@ function download() {
 					</select>
 				</div>
 			</div>
-			<button
-				class="border-rounded mx-auto flex flex-row gap-2 py-2 px-4 justify-center items-center hover:scale-105 transition-transform group"
-				:style="downloadStyle"
-				title="Download"
-				@click="download()"
-			>
-				<span v-text="downloaded ? 'Downloaded!' : 'Download'" />
-				<i v-if="downloaded" class="i-carbon-checkmark" />
-				<i v-else class="i-carbon-download group-hover:animate-tada" />
-			</button>
+			<div class="mx-auto flex flex-col sm:flex-row gap-2 items-center">
+				<button
+					class="border-rounded flex flex-row gap-2 py-2 px-4 justify-center items-center hover:scale-105 transition-transform group"
+					:style="downloadStyle"
+					title="Download"
+					@click="download()"
+				>
+					<span v-text="downloaded ? 'Downloaded!' : 'Download'" />
+					<i v-if="downloaded" class="i-carbon-checkmark" />
+					<i
+						v-else
+						class="i-carbon-download group-hover:animate-tada"
+					/>
+				</button>
+				<button
+					class="border border-surface0 border-rounded flex flex-row gap-2 py-2 px-4 justify-center items-center bg-surface0 hover:bg-surface1"
+					:title="`Download the ${themeLabel} browser theme for Chrome, Edge, Brave and Firefox`"
+					@click="downloadTheme()"
+				>
+					<span
+						v-text="
+							themeDownloaded
+								? 'Theme downloaded!'
+								: 'Browser theme'
+						"
+					/>
+					<i v-if="themeDownloaded" class="i-carbon-checkmark" />
+					<i v-else class="i-carbon-application-web" />
+				</button>
+			</div>
 			<div class="mx-auto flex flex-col gap-2 w-full lg:w-3/4">
 				<div class="flex flex-col sm:flex-row gap-2 self-center my-4">
 					<input
